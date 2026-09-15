@@ -320,7 +320,7 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-0.5">
-                          {item.quantity} ración/es • {assignedCount} comensales
+                          {item.quantity} ración/es • {item.assignedMemberIds.length > 0 ? `${item.assignedMemberIds.length} comensal/es` : 'Sin comensales'}
                         </p>
                       </div>
                     </div>
@@ -330,7 +330,7 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
                         {item.total_price.toFixed(2).replace('.', ',')} €
                       </span>
                       <p className="text-[11px] text-emerald-700 font-bold tabular-nums whitespace-nowrap">
-                        {unitShare.toFixed(2).replace('.', ',')} € / c/u
+                        {item.assignedMemberIds.length > 0 ? `${unitShare.toFixed(2).replace('.', ',')} € / c/u` : `${item.total_price.toFixed(2).replace('.', ',')} € total`}
                       </p>
                     </div>
                   </div>
@@ -338,22 +338,28 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asignados:</span>
                     <div className="flex items-center gap-1 flex-wrap justify-end">
-                      {item.assignedMemberIds.map((mId) => {
-                        const m = sala.members.find((member) => member.id === mId);
-                        const isSelf = mId === currentUserId;
-                        return (
-                          <span
-                            key={mId}
-                            className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
-                              isSelf
-                                ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {isSelf ? 'Tú' : m?.alias || m?.name || mId}
-                          </span>
-                        );
-                      })}
+                      {item.assignedMemberIds.length > 0 ? (
+                        item.assignedMemberIds.map((mId) => {
+                          const m = sala.members.find((member) => member.id === mId);
+                          const isSelf = mId === currentUserId;
+                          return (
+                            <span
+                              key={mId}
+                              className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                                isSelf
+                                  ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {isSelf ? 'Tú' : m?.alias || m?.name || mId}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                          Sin comensales asignados
+                        </span>
+                      )}
                     </div>
                   </div>
                 </article>

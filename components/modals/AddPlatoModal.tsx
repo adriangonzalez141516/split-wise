@@ -64,7 +64,7 @@ export default function AddPlatoModal({
   const [unitPrice, setUnitPrice] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [category, setCategory] = useState<ItemCategory>('food');
-  const [assignedMemberIds, setAssignedMemberIds] = useState<string[]>([currentUserId]);
+  const [assignedMemberIds, setAssignedMemberIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // AI Scan State
@@ -83,7 +83,7 @@ export default function AddPlatoModal({
 
   const selectAllMembers = () => {
     if (assignedMemberIds.length === members.length) {
-      setAssignedMemberIds([currentUserId]);
+      setAssignedMemberIds([]);
     } else {
       setAssignedMemberIds(members.map((m) => m.id));
     }
@@ -103,7 +103,7 @@ export default function AddPlatoModal({
         quantity: Math.max(1, quantity),
         total_price: Math.round(priceNum * Math.max(1, quantity) * 100) / 100,
         category,
-        assignedMemberIds: assignedMemberIds.length > 0 ? assignedMemberIds : [currentUserId],
+        assignedMemberIds: assignedMemberIds,
       };
 
       const res = await anadirPlatoAction(salaId, eventoId, dishData);
@@ -118,7 +118,7 @@ export default function AddPlatoModal({
         setUnitPrice('');
         setQuantity(1);
         setCategory('food');
-        setAssignedMemberIds([currentUserId]);
+        setAssignedMemberIds([]);
       }
     } catch (err) {
       console.error(err);
@@ -135,20 +135,14 @@ export default function AddPlatoModal({
     setScanStep('inferring');
     await new Promise((r) => setTimeout(r, 1200));
 
-    // Prepare extracted items assigned to all members by default
-    const allMemberIds = members.map((m) => m.id);
-    const selfMember = members.find(
-      (m) => m.id === currentUserId || m.name.includes('Carlos') || m.name.includes('(Tú)')
-    );
-    const effectiveUserId = selfMember ? selfMember.id : members[0]?.id || currentUserId;
-
+    // Platos extraídos sin asignar a nadie por defecto: cada comensal se asigna en mesa
     const extracted: Omit<TicketItem, 'id'>[] = selectedTicketSample.items.map((i) => ({
       name: i.name,
       quantity: i.quantity,
       unit_price: i.unit_price,
       total_price: Math.round(i.quantity * i.unit_price * 100) / 100,
       category: i.category,
-      assignedMemberIds: i.category === 'alcohol' ? [effectiveUserId] : allMemberIds,
+      assignedMemberIds: [],
     }));
 
     setScannedItems(extracted);

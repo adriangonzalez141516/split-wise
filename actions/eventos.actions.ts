@@ -206,10 +206,10 @@ export async function anadirPlatoAction(
   const uPrice = Number(platoData.unit_price || 0);
   const tPrice = Math.round(qty * uPrice * 100) / 100;
 
-  // Normalizar assignedMemberIds asegurando compatibilidad de identificadores
-  const assigned = (platoData.assignedMemberIds && platoData.assignedMemberIds.length > 0)
-    ? platoData.assignedMemberIds.map((id) => (id === 'user-carlos' ? 'm1' : id))
-    : ['m1'];
+  // Asignar solo si el usuario seleccionó comensales explícitamente; por defecto queda vacío ([])
+  const assigned = (platoData.assignedMemberIds && Array.isArray(platoData.assignedMemberIds))
+    ? platoData.assignedMemberIds
+    : [];
 
   const newItem: TicketItem = {
     id: itemId,
@@ -307,9 +307,10 @@ export async function anadirPlatosDesdeTicketAction(
       const uPrice = Number(plato.unit_price || 0);
       const tPrice = Math.round(qty * uPrice * 100) / 100;
 
-      const assigned = (plato.assignedMemberIds && plato.assignedMemberIds.length > 0)
-        ? plato.assignedMemberIds.map((id) => (id === 'user-carlos' ? 'm1' : id))
-        : ['m1'];
+      // Respetar comensales explícitos o dejar vacío sin asignar a nadie por defecto ([])
+      const assigned = (plato.assignedMemberIds && Array.isArray(plato.assignedMemberIds))
+        ? plato.assignedMemberIds
+        : [];
 
       const newItem: TicketItem = {
         id: itemId,
