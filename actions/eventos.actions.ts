@@ -1,22 +1,78 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { getSupabaseServer } from '@/lib/supabase/server';
 import {
-  getEventoById,
-  getSalaById,
-  toggleItemClaim,
-  excludeAlcoholForMember,
-  addItemToEvento,
-  addMultipleItemsToEvento,
-  createEvento,
+  getEventoById as getLocalEventoById,
+  getSalaById as getLocalSalaById,
+  toggleItemClaim as toggleLocalItemClaim,
+  excludeAlcoholForMember as excludeLocalAlcoholForMember,
+  addItemToEvento as addLocalItemToEvento,
+  addMultipleItemsToEvento as addLocalMultipleItemsToEvento,
+  createEvento as createLocalEvento,
   CURRENT_USER_ID,
 } from '@/lib/store';
 import { Evento, TicketItem } from '@/lib/types';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
 
 export async function getEventoDetailAction(salaId: string, eventoId: string): Promise<Evento | null> {
-  const evento = getEventoById(salaId, eventoId);
-  return evento || null;
+  try {
+    const supabase = getSupabaseServer();
+    const { data: e, error } = await supabase
+      .from('eventos')
+      .select(`
+        *,
+        items:ticket_items(
+          *,
+          assignments:ticket_item_assignments(*)
+        ),
+        liquidaciones(*)
+      `)
+      .eq('id', eventoId)
+      .single();
+
+    if (!error && e) {
+      return {
+        id: e.id,
+        salaId: e.sala_id,
+        title: e.title,
+        venue: e.venue,
+        date: e.date,
+        status: e.status as 'en_curso' | 'cerrado',
+        originalPayerId: e.original_payer_id || 'm1',
+        items: (e.items || []).map((item: Record<string, unknown>) => ({
+          id: String(item.id),
+          name: String(item.name),
+          quantity: Number(item.quantity || 1),
+          unit_price: Number(item.unit_price || 0),
+          total_price: Number(item.total_price || 0),
+          category: (item.category as TicketItem['category']) || 'food',
+          assignedMemberIds: ((item.assignments as Array<Record<string, unknown>>) || []).map((a) =>
+            String(a.member_id)
+          ),
+        })),
+        commonCosts: [],
+        globalModifiers: {},
+        totalAmount: Number(e.total_amount || 0),
+        transactions: (e.liquidaciones || []).map((l: Record<string, unknown>) => ({
+          id: String(l.id),
+          fromMemberId: String(l.from_member_id),
+          toMemberId: String(l.to_member_id),
+          amount: Number(l.amount || 0),
+          status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
+          suggestedAt: String(l.suggested_at || new Date().toISOString()),
+          updatedAt: String(l.updated_at || new Date().toISOString()),
+          note: l.note ? String(l.note) : undefined,
+          ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
+        })),
+      };
+    }
+  } catch (err) {
+    console.warn('[Supabase] Usando almacén local para getEventoDetailAction:', err);
+  }
+
+  const localEvento = getLocalEventoById(salaId, eventoId);
+  return localEvento || null;
 }
 
 export async function togglePlatoClaimAction(
@@ -25,9 +81,27 @@ export async function togglePlatoClaimAction(
   itemId: string,
   memberId: string = CURRENT_USER_ID
 ): Promise<{ success: boolean; item?: TicketItem }> {
-  const success = toggleItemClaim(salaId, eventoId, itemId, memberId);
-  const evento = getEventoById(salaId, eventoId);
+  const success = toggleLocalItemClaim(salaId, eventoId, itemId, memberId);
+  const evento = getLocalEventoById(salaId, eventoId);
   const item = evento?.items.find((i) => i.id === itemId);
+
+  try {
+    const supabase = getSupabaseServer();
+    if (item?.assignedMemberIds.includes(memberId)) {
+      await supabase.from('ticket_item_assignments').insert({
+        item_id: itemId,
+        member_id: memberId,
+      });
+    } else {
+      await supabase
+        .from('ticket_item_assignments')
+        .delete()
+        .eq('item_id', itemId)
+        .eq('member_id', memberId);
+    }
+  } catch (err) {
+    console.warn('[Supabase] Fallo al sincronizar toggle plato:', err);
+  }
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   return { success, item };
@@ -39,7 +113,7 @@ export async function excluirAlcoholAction(
   memberId: string = CURRENT_USER_ID,
   exclude: boolean = true
 ): Promise<{ success: boolean }> {
-  excludeAlcoholForMember(salaId, eventoId, memberId, exclude);
+  excludeLocalAlcoholForMember(salaId, eventoId, memberId, exclude);
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   return { success: true };
 }
@@ -49,7 +123,7 @@ export async function repartirCostesComunesAction(
   eventoId: string,
   splitType: 'equitativo' | 'proporcional'
 ): Promise<{ success: boolean }> {
-  const evento = getEventoById(salaId, eventoId);
+  const evento = getLocalEventoById(salaId, eventoId);
   if (!evento) return { success: false };
 
   for (const cc of evento.commonCosts) {
@@ -64,30 +138,26 @@ export async function consolidarEventoAction(
   salaId: string,
   eventoId: string
 ): Promise<{ success: boolean; message: string }> {
-  const sala = getSalaById(salaId);
-  const evento = getEventoById(salaId, eventoId);
+  const sala = getLocalSalaById(salaId);
+  const evento = getLocalEventoById(salaId, eventoId);
   if (!sala || !evento) return { success: false, message: 'Evento no encontrado' };
 
-  // Calculate member net consumption
   const activeMembers = sala.members;
   const balances: { memberId: string; netBalance: number }[] = [];
 
   for (const member of activeMembers) {
     let consumption = 0;
 
-    // Item consumption
     for (const item of evento.items) {
       if (item.assignedMemberIds.includes(member.id)) {
         consumption += item.total_price / (item.assignedMemberIds.length || 1);
       }
     }
 
-    // Common costs
     for (const cc of evento.commonCosts) {
       consumption += cc.amount / (activeMembers.length || 1);
     }
 
-    // Advance payment
     const isPayer = evento.originalPayerId === member.id;
     const advance = isPayer ? evento.totalAmount : 0;
 
@@ -95,10 +165,32 @@ export async function consolidarEventoAction(
     balances.push({ memberId: member.id, netBalance: Math.round(net * 100) / 100 });
   }
 
-  // Generate Min-Cash-Flow transactions
   const optimizedTx = calculateMinCashFlow(balances, evento.originalPayerId);
   evento.transactions = optimizedTx;
   evento.suggestedPayerId = identifySuggestedPayer(balances);
+
+  try {
+    const supabase = getSupabaseServer();
+    await supabase.from('eventos').update({ status: 'cerrado' }).eq('id', eventoId);
+
+    if (optimizedTx.length > 0) {
+      await supabase.from('liquidaciones').upsert(
+        optimizedTx.map((tx) => ({
+          id: tx.id,
+          sala_id: salaId,
+          evento_id: eventoId,
+          from_member_id: tx.fromMemberId,
+          to_member_id: tx.toMemberId,
+          amount: tx.amount,
+          status: tx.status,
+          rule_applied: tx.ruleApplied,
+          note: tx.note || null,
+        }))
+      );
+    }
+  } catch (err) {
+    console.warn('[Supabase] Fallo al sincronizar consolidación en Supabase:', err);
+  }
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   return { success: true, message: 'Evento consolidado con optimización Min-Cash-Flow' };
@@ -109,7 +201,34 @@ export async function anadirPlatoAction(
   eventoId: string,
   platoData: Omit<TicketItem, 'id'>
 ): Promise<{ success: boolean; item?: TicketItem }> {
-  const item = addItemToEvento(salaId, eventoId, platoData);
+  const item = addLocalItemToEvento(salaId, eventoId, platoData);
+
+  if (item) {
+    try {
+      const supabase = getSupabaseServer();
+      await supabase.from('ticket_items').insert({
+        id: item.id,
+        evento_id: eventoId,
+        name: item.name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+        category: item.category,
+      });
+
+      if (item.assignedMemberIds.length > 0) {
+        await supabase.from('ticket_item_assignments').insert(
+          item.assignedMemberIds.map((mId) => ({
+            item_id: item.id,
+            member_id: mId,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn('[Supabase] Fallo al sincronizar plato en Supabase:', err);
+    }
+  }
+
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
   return { success: !!item, item };
@@ -120,7 +239,36 @@ export async function anadirPlatosDesdeTicketAction(
   eventoId: string,
   platos: Omit<TicketItem, 'id'>[]
 ): Promise<{ success: boolean; addedCount: number; items: TicketItem[] }> {
-  const items = addMultipleItemsToEvento(salaId, eventoId, platos);
+  const items = addLocalMultipleItemsToEvento(salaId, eventoId, platos);
+
+  if (items.length > 0) {
+    try {
+      const supabase = getSupabaseServer();
+      for (const item of items) {
+        await supabase.from('ticket_items').insert({
+          id: item.id,
+          evento_id: eventoId,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          category: item.category,
+        });
+
+        if (item.assignedMemberIds.length > 0) {
+          await supabase.from('ticket_item_assignments').insert(
+            item.assignedMemberIds.map((mId) => ({
+              item_id: item.id,
+              member_id: mId,
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      console.warn('[Supabase] Fallo al sincronizar platos múltiples:', err);
+    }
+  }
+
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
   return { success: items.length > 0, addedCount: items.length, items };
@@ -136,8 +284,25 @@ export async function crearEventoAction(
     originalPayerId?: string;
   }
 ): Promise<{ success: boolean; evento?: Evento }> {
-  const evento = createEvento(salaId, eventData);
+  const evento = createLocalEvento(salaId, eventData);
+
   if (evento) {
+    try {
+      const supabase = getSupabaseServer();
+      await supabase.from('eventos').insert({
+        id: evento.id,
+        sala_id: salaId,
+        title: evento.title,
+        venue: evento.venue,
+        date: evento.date || new Date().toISOString().split('T')[0],
+        status: 'en_curso',
+        original_payer_id: evento.originalPayerId,
+        total_amount: evento.totalAmount || 0,
+      });
+    } catch (err) {
+      console.warn('[Supabase] Fallo al insertar evento en Supabase:', err);
+    }
+
     revalidatePath(`/sala/${salaId}`);
     revalidatePath(`/sala/${salaId}/evento/${evento.id}`);
     revalidatePath('/');
