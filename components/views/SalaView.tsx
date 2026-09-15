@@ -168,6 +168,105 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
         </div>
       </section>
 
+      {/* Eventos y Cuentas en Mesa */}
+      <section className="fintech-card p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-emerald-700 text-[18px]">receipt_long</span>
+            <h2 className="text-xs font-black text-slate-900 font-heading uppercase tracking-wider">
+              Eventos y Cuentas ({sala.eventos?.length || 0})
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCreateEventoModal(true)}
+            className="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1 active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-sm">add_circle</span>
+            <span>Nuevo</span>
+          </button>
+        </div>
+
+        {sala.eventos && sala.eventos.length > 0 ? (
+          <div className="flex flex-col gap-2.5">
+            {sala.eventos.map((ev) => {
+              const isEnCurso = ev.status === 'en_curso';
+              const payer = sala.members.find((m) => m.id === ev.originalPayerId);
+
+              return (
+                <Link
+                  key={ev.id}
+                  href={`/sala/${sala.id}/evento/${ev.id}`}
+                  className="p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-center justify-between gap-3 group active:scale-[0.99] shadow-2xs"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 group-hover:border-emerald-300 flex items-center justify-center text-emerald-700 shrink-0 shadow-2xs transition-colors">
+                      <span className="material-symbols-outlined text-[20px]">
+                        restaurant
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-xs font-black text-slate-900 font-heading truncate">
+                          {ev.venue || ev.title}
+                        </h3>
+                        <span
+                          className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded uppercase flex items-center gap-1 ${
+                            isEnCurso
+                              ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300/60'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isEnCurso && <span className="w-1 h-1 rounded-full bg-emerald-600 animate-pulse"></span>}
+                          {isEnCurso ? 'En curso' : 'Cerrado'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                        {ev.date} • {ev.items?.length || 0} plato{ev.items?.length === 1 ? '' : 's'} • Pagó {payer?.name?.replace(' (Tú)', '') || 'Carlos'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0 flex items-center gap-2">
+                    <div>
+                      <span className="text-sm font-black text-slate-900 tabular-nums font-heading block whitespace-nowrap">
+                        {ev.totalAmount.toFixed(2).replace('.', ',')} €
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-bold block whitespace-nowrap group-hover:underline">
+                        Ver reparto
+                      </span>
+                    </div>
+                    <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-700 text-[18px] transition-colors">
+                      chevron_right
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-6 px-4 rounded-2xl bg-slate-50/70 border border-dashed border-slate-200 text-center flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+              <span className="material-symbols-outlined text-xl">receipt_long</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-700">Sin eventos en esta sala</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Crea una cuenta en mesa o escanea un ticket con IA para comenzar.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCreateEventoModal(true)}
+              className="mt-1 h-8 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-all active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Abrir Primer Evento</span>
+            </button>
+          </div>
+        )}
+      </section>
+
       {/* 3 Opciones de Liquidación y Puesta al Día */}
       <section className="fintech-card p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">

@@ -53,7 +53,13 @@ export async function getSalasAction(): Promise<Sala[]> {
           isVirtual: Boolean(m.is_virtual),
           claimToken: m.claim_token ? String(m.claim_token) : undefined,
         })),
-        eventos: (s.eventos || []).map((e: Record<string, unknown>) => ({
+        eventos: (s.eventos || [])
+          .sort(
+            (a: Record<string, unknown>, b: Record<string, unknown>) =>
+              new Date(String(b.created_at || b.date || 0)).getTime() -
+              new Date(String(a.created_at || a.date || 0)).getTime()
+          )
+          .map((e: Record<string, unknown>) => ({
           id: String(e.id),
           salaId: String(e.sala_id || s.id),
           title: String(e.title),
@@ -140,7 +146,13 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
           isVirtual: Boolean(m.is_virtual),
           claimToken: m.claim_token ? String(m.claim_token) : undefined,
         })),
-        eventos: (s.eventos || []).map((e: Record<string, unknown>) => ({
+        eventos: (s.eventos || [])
+          .sort(
+            (a: Record<string, unknown>, b: Record<string, unknown>) =>
+              new Date(String(b.created_at || b.date || 0)).getTime() -
+              new Date(String(a.created_at || a.date || 0)).getTime()
+          )
+          .map((e: Record<string, unknown>) => ({
           id: String(e.id),
           salaId: String(e.sala_id || s.id),
           title: String(e.title),
