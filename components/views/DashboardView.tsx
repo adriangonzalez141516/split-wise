@@ -104,9 +104,6 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
             </span>
             <span className="text-xs text-slate-500 font-semibold">acumulado</span>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Principio de No Compensación entre salas independientes
-          </p>
         </div>
 
         {/* Floating Metrics Tiles (Te deben / Debes) */}
@@ -163,7 +160,6 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
         </div>
 
         {salas.map((sala) => {
-          const liveEvent = sala.eventos.find((e) => e.status === 'en_curso');
           const isFeatured = sala.id === 'cenas-viernes';
 
           return (
@@ -173,25 +169,6 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
                 isFeatured ? 'fintech-card-featured' : ''
               }`}
             >
-              {/* Top Live Badge Indicator if there's an ongoing event */}
-              {liveEvent && (
-                <div className="flex items-center justify-between gap-2">
-                  <Link
-                    href={`/sala/${sala.id}/evento/${liveEvent.id}`}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 hover:bg-emerald-100 transition-colors"
-                  >
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-                    </span>
-                    <span className="text-[11px] font-extrabold tracking-tight">
-                      En vivo: {liveEvent.venue} ({liveEvent.table})
-                    </span>
-                  </Link>
-                  <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Ahora</span>
-                </div>
-              )}
-
               {/* Room Header & Net Balance */}
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
@@ -303,47 +280,17 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
                   </span>
                 </div>
 
-                {liveEvent ? (
-                  <Link
-                    href={`/sala/${sala.id}/evento/${liveEvent.id}`}
-                    className="inline-flex items-center gap-1 text-emerald-700 text-xs font-bold hover:underline active:scale-95 transition-transform"
-                  >
-                    <span>Entrar a mesa</span>
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href={`/sala/${sala.id}`}
-                    className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs"
-                  >
-                    Ver sala
-                  </Link>
-                )}
+                <Link
+                  href={`/sala/${sala.id}`}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-1"
+                >
+                  <span>Ver sala</span>
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </Link>
               </div>
             </article>
           );
         })}
-      </section>
-
-      {/* 3. Utility Link */}
-      <section className="pt-1">
-        <Link
-          href="/actividad"
-          className="fintech-card p-4.5 flex items-center justify-between hover:bg-slate-50/80 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-2xs">
-              <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 font-heading">Desglose de tickets pasados</h4>
-              <p className="text-[11px] text-slate-500 font-medium">Consulta historiales y comprobantes con IA</p>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition-colors text-[18px]">
-            chevron_right
-          </span>
-        </Link>
       </section>
 
       {/* Modals */}
