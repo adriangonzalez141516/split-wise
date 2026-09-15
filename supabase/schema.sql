@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.ticket_items (
 
 -- 7. TABLA: ASIGNACIÓN DE ITEMS A MIEMBROS (Quién comparte cada plato)
 CREATE TABLE IF NOT EXISTS public.ticket_item_assignments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_id TEXT NOT NULL REFERENCES public.ticket_items(id) ON DELETE CASCADE,
     member_id TEXT NOT NULL REFERENCES public.sala_members(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
