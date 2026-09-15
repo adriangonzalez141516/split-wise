@@ -26,8 +26,6 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
   const [virtualName, setVirtualName] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
-  const liveEvent = sala.eventos.find((e) => e.status === 'en_curso');
-
   // Effective member balances list
   const effectiveBalances: MemberBalanceInfo[] =
     allBalances && allBalances.length > 0
@@ -281,49 +279,6 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
         </div>
       </section>
 
-      {/* Featured Live Event Banner */}
-      {liveEvent && (
-        <section className="fintech-card-featured p-4 flex flex-col gap-2.5">
-          <div className="flex items-start justify-between gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
-                <span className="material-symbols-outlined text-[18px]">restaurant</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 whitespace-nowrap">
-                    EN VIVO • {liveEvent.table || 'MESA 14'}
-                  </span>
-                </div>
-                <h4 className="text-xs font-black text-slate-900 truncate font-heading mt-0.5">
-                  {liveEvent.venue}
-                </h4>
-              </div>
-            </div>
-
-            <div className="text-right shrink-0 pl-1">
-              <span className="text-base font-black text-slate-900 tabular-nums font-heading block whitespace-nowrap">
-                {liveEvent.totalAmount.toFixed(2).replace('.', ',')} €
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Ticket general</span>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Reparto en vivo con 6 comensales sincronizados. Asignación de raciones y liquidación Min-Cash-Flow disponibles.
-          </p>
-
-          <Link
-            href={`/sala/${sala.id}/evento/${liveEvent.id}`}
-            className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white text-xs font-bold text-center transition-all shadow-xs flex items-center justify-center gap-1.5"
-          >
-            <span>Abrir Sesión de Reparto</span>
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </Link>
-        </section>
-      )}
-
       {/* Members Section (Registrados vs Virtuales) */}
       <section className="fintech-card p-4.5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -384,50 +339,6 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
                   <span>{copiedToken === member.claimToken ? 'Copiado' : 'Claim'}</span>
                 </button>
               )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Historial de Consumos en Sala */}
-      <section className="fintech-card p-4.5 flex flex-col gap-2.5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-extrabold text-slate-900 font-heading uppercase tracking-wider">
-            Historial de Consumos ({sala.eventos.length})
-          </h3>
-          <button
-            type="button"
-            onClick={() => setShowCreateEventoModal(true)}
-            className="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1 active:scale-95 transition-transform"
-          >
-            <span className="material-symbols-outlined text-sm">add_circle</span>
-            <span>Nuevo evento</span>
-          </button>
-        </div>
-        <div className="flex flex-col gap-2">
-          {sala.eventos.map((ev) => (
-            <div
-              key={ev.id}
-              className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-2.5 text-xs"
-            >
-              <div className="min-w-0">
-                <span className="font-bold text-slate-900 truncate block font-heading">{ev.title}</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  {ev.venue} • {ev.date}
-                </span>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="font-black text-slate-900 tabular-nums font-heading block text-xs whitespace-nowrap">
-                  {ev.totalAmount.toFixed(2).replace('.', ',')} €
-                </span>
-                <span
-                  className={`text-[9px] font-bold uppercase tracking-wider ${
-                    ev.status === 'en_curso' ? 'text-emerald-700' : 'text-slate-400'
-                  }`}
-                >
-                  {ev.status === 'en_curso' ? 'En curso' : 'Consolidado'}
-                </span>
-              </div>
             </div>
           ))}
         </div>
