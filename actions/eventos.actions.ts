@@ -6,6 +6,8 @@ import {
   getSalaById,
   toggleItemClaim,
   excludeAlcoholForMember,
+  addItemToEvento,
+  addMultipleItemsToEvento,
   CURRENT_USER_ID,
 } from '@/lib/store';
 import { Evento, TicketItem } from '@/lib/types';
@@ -99,4 +101,26 @@ export async function consolidarEventoAction(
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   return { success: true, message: 'Evento consolidado con optimización Min-Cash-Flow' };
+}
+
+export async function anadirPlatoAction(
+  salaId: string,
+  eventoId: string,
+  platoData: Omit<TicketItem, 'id'>
+): Promise<{ success: boolean; item?: TicketItem }> {
+  const item = addItemToEvento(salaId, eventoId, platoData);
+  revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
+  revalidatePath(`/sala/${salaId}`);
+  return { success: !!item, item };
+}
+
+export async function anadirPlatosDesdeTicketAction(
+  salaId: string,
+  eventoId: string,
+  platos: Omit<TicketItem, 'id'>[]
+): Promise<{ success: boolean; addedCount: number; items: TicketItem[] }> {
+  const items = addMultipleItemsToEvento(salaId, eventoId, platos);
+  revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
+  revalidatePath(`/sala/${salaId}`);
+  return { success: items.length > 0, addedCount: items.length, items };
 }

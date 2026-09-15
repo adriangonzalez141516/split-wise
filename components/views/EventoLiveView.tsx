@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
+import AddPlatoModal from '@/components/modals/AddPlatoModal';
 import {
   togglePlatoClaimAction,
   excluirAlcoholAction,
@@ -24,6 +25,7 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
   const [commonSplit, setCommonSplit] = useState<'equitativo' | 'proporcional'>('equitativo');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
+  const [showAddPlatoModal, setShowAddPlatoModal] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
 
   // Local optimistic state for dishes
@@ -370,6 +372,25 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
             </div>
           </div>
 
+          {/* Header de Lista de Platos con botón Añadir Plato / Escanear Ticket */}
+          <div className="flex items-center justify-between gap-2 pt-1 pb-0.5">
+            <div>
+              <h3 className="text-xs font-black text-slate-900 font-heading uppercase tracking-wider">
+                Platos en Mesa ({items.length})
+              </h3>
+              <span className="text-[10px] text-slate-400 font-medium">Asignados colaborativamente</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAddPlatoModal(true)}
+              className="h-8 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Añadir Plato</span>
+            </button>
+          </div>
+
           {/* Lista de Platos Extraídos con IA */}
           <div className="flex flex-col gap-2.5">
             {items.map((item) => {
@@ -671,6 +692,20 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
         isOpen={showMonetizationModal}
         onClose={() => setShowMonetizationModal(false)}
         roomName={sala.name}
+      />
+      <AddPlatoModal
+        isOpen={showAddPlatoModal}
+        onClose={() => setShowAddPlatoModal(false)}
+        salaId={sala.id}
+        eventoId={evento.id}
+        members={sala.members}
+        currentUserId={currentUserId}
+        onDishAdded={(newItem) => {
+          setItems((prev) => [...prev, newItem]);
+        }}
+        onMultipleDishesAdded={(newItems) => {
+          setItems((prev) => [...prev, ...newItems]);
+        }}
       />
     </div>
   );

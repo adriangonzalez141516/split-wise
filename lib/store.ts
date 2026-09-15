@@ -1,4 +1,4 @@
-import { Sala, Evento, UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction, Member } from './types';
+import { Sala, Evento, UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction, Member, TicketItem } from './types';
 import { calculateMinCashFlow, identifySuggestedPayer } from './min-cash-flow';
 
 // Initial Mock Seed Data matching Stitch designs & technical specifications
@@ -490,4 +490,55 @@ export function updateTransactionStatus(salaId: string, eventoId: string, txId: 
   tx.status = newStatus;
   tx.updatedAt = new Date().toISOString();
   return true;
+}
+
+/**
+ * Mutation: Add a new dish/item to an event
+ */
+export function addItemToEvento(
+  salaId: string,
+  eventoId: string,
+  itemData: Omit<TicketItem, 'id'>
+): TicketItem | undefined {
+  const evento = getEventoById(salaId, eventoId);
+  if (!evento) return undefined;
+
+  const newItem: TicketItem = {
+    ...itemData,
+    id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    total_price: Math.round(itemData.quantity * itemData.unit_price * 100) / 100,
+  };
+
+  evento.items.push(newItem);
+  evento.totalAmount = Math.round((evento.totalAmount + newItem.total_price) * 100) / 100;
+  return newItem;
+}
+
+/**
+ * Mutation: Add multiple items (from ticket scanning) to an event
+ */
+export function addMultipleItemsToEvento(
+  salaId: string,
+  eventoId: string,
+  newItemsData: Omit<TicketItem, 'id'>[]
+): TicketItem[] {
+  const evento = getEventoById(salaId, eventoId);
+  if (!evento) return [];
+
+  const addedItems: TicketItem[] = [];
+  let addedTotal = 0;
+
+  for (const data of newItemsData) {
+    const item: TicketItem = {
+      ...data,
+      id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      total_price: Math.round(data.quantity * data.unit_price * 100) / 100,
+    };
+    evento.items.push(item);
+    addedItems.push(item);
+    addedTotal += item.total_price;
+  }
+
+  evento.totalAmount = Math.round((evento.totalAmount + addedTotal) * 100) / 100;
+  return addedItems;
 }
