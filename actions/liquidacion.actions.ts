@@ -12,8 +12,11 @@ import {
 import { UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction } from '@/lib/types';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
 
+import { getSalasAction, getSalaDetailAction } from './salas.actions';
+
 export async function getMonederoGlobalAction(userId: string = CURRENT_USER_ID): Promise<UserGlobalWallet> {
-  return calculateUserGlobalWallet(userId);
+  const salas = await getSalasAction();
+  return calculateUserGlobalWallet(userId, salas);
 }
 
 export async function getBalancesSalaAction(salaId: string): Promise<RoomBalanceCalculation[]> {

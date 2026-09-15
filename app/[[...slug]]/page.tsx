@@ -45,9 +45,9 @@ export default async function OrchestratorPage({ params }: PageProps) {
     const sala = await getSalaDetailAction(route.salaId);
     if (!sala) return notFound();
 
-    const balance = calculateRoomBalance(route.salaId, CURRENT_USER_ID);
+    const balance = calculateRoomBalance(sala, CURRENT_USER_ID);
     const allBalances = sala.members.map((m) => {
-      const calc = calculateRoomBalance(sala.id, m.id);
+      const calc = calculateRoomBalance(sala, m.id);
       return {
         memberId: m.id,
         name: m.name,

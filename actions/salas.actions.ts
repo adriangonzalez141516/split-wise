@@ -10,7 +10,7 @@ import {
   claimAccount as claimLocalAccount,
   CURRENT_USER_ID,
 } from '@/lib/store';
-import { Sala, Member } from '@/lib/types';
+import { Sala, Member, TicketItem } from '@/lib/types';
 
 export async function getSalasAction(): Promise<Sala[]> {
   try {
@@ -79,7 +79,14 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
       .select(`
         *,
         members:sala_members(*),
-        eventos(*)
+        eventos(
+          *,
+          items:ticket_items(
+            *,
+            assignments:ticket_item_assignments(*)
+          ),
+          liquidaciones(*)
+        )
       `)
       .eq('id', salaId)
       .single();
@@ -114,11 +121,31 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
           date: String(e.date),
           status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
           originalPayerId: String(e.original_payer_id || 'm1'),
-          items: [],
+          items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
+            id: String(it.id),
+            name: String(it.name),
+            quantity: Number(it.quantity || 1),
+            unit_price: Number(it.unit_price || 0),
+            total_price: Number(it.total_price || 0),
+            category: (it.category as TicketItem['category']) || 'food',
+            assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
+              String(a.member_id)
+            ),
+          })),
           commonCosts: [],
           globalModifiers: {},
           totalAmount: Number(e.total_amount || 0),
-          transactions: [],
+          transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
+            id: String(l.id),
+            fromMemberId: String(l.from_member_id),
+            toMemberId: String(l.to_member_id),
+            amount: Number(l.amount || 0),
+            status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
+            suggestedAt: String(l.suggested_at || new Date().toISOString()),
+            updatedAt: String(l.updated_at || new Date().toISOString()),
+            note: l.note ? String(l.note) : undefined,
+            ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
+          })),
         })),
         createdAt: s.created_at || new Date().toISOString(),
         lastActivityAt: s.last_activity_at || new Date().toISOString(),
