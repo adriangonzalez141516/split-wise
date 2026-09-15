@@ -247,26 +247,6 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
       {/* ==================== TAB 1: REPARTO & PLATOS ==================== */}
       {activeTab === 'ticket' && (
         <div className="flex flex-col gap-3">
-          {/* Mini Banner Web Guest & Onboarding */}
-          <div className="fintech-card p-3.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[18px]">qr_code_scanner</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 leading-tight">Web Guest Onboarding</p>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">Acceso sin app ni registro para acompañantes.</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowQrModal(true)}
-              className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors shrink-0"
-            >
-              Mostrar QR
-            </button>
-          </div>
-
           {/* Helper hint */}
           <div className="flex items-center justify-end gap-1 text-[11px] text-slate-400 font-medium py-0.5 whitespace-nowrap">
             <span className="material-symbols-outlined text-[14px]">touch_app</span>
