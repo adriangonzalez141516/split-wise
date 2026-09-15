@@ -81,30 +81,106 @@ export async function togglePlatoClaimAction(
   itemId: string,
   memberId: string = CURRENT_USER_ID
 ): Promise<{ success: boolean; item?: TicketItem }> {
-  const success = toggleLocalItemClaim(salaId, eventoId, itemId, memberId);
-  const evento = getLocalEventoById(salaId, eventoId);
-  const item = evento?.items.find((i) => i.id === itemId);
+  let isAssignedNow = false;
 
   try {
     const supabase = getSupabaseServer();
-    if (item?.assignedMemberIds.includes(memberId)) {
-      await supabase.from('ticket_item_assignments').insert({
-        item_id: itemId,
-        member_id: memberId,
-      });
-    } else {
-      await supabase
+
+    // Resolver memberId válido para esta sala (defensa ante fallbacks)
+    let effectiveMemberId = memberId;
+    const { data: memberInSala } = await supabase
+      .from('sala_members')
+      .select('id')
+      .eq('sala_id', salaId)
+      .eq('id', memberId)
+      .maybeSingle();
+
+    if (!memberInSala) {
+      const { data: fallbackMember } = await supabase
+        .from('sala_members')
+        .select('id')
+        .eq('sala_id', salaId)
+        .ilike('name', '%Carlos%')
+        .maybeSingle();
+
+      if (fallbackMember) {
+        effectiveMemberId = fallbackMember.id;
+      } else {
+        const { data: firstMember } = await supabase
+          .from('sala_members')
+          .select('id')
+          .eq('sala_id', salaId)
+          .limit(1)
+          .maybeSingle();
+        if (firstMember) effectiveMemberId = firstMember.id;
+      }
+    }
+
+    // Comprobar si ya existe asignación en Supabase
+    const { data: existing, error: checkError } = await supabase
+      .from('ticket_item_assignments')
+      .select('id')
+      .eq('item_id', itemId)
+      .eq('member_id', effectiveMemberId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.warn('[Supabase] Error al consultar ticket_item_assignments:', checkError);
+    }
+
+    if (existing) {
+      // Si ya estaba asignado -> Eliminar asignación (desmarcar)
+      const { error: delError } = await supabase
         .from('ticket_item_assignments')
         .delete()
         .eq('item_id', itemId)
-        .eq('member_id', memberId);
+        .eq('member_id', effectiveMemberId);
+
+      if (delError) {
+        console.error('[Supabase] Error al eliminar asignación:', delError);
+      } else {
+        isAssignedNow = false;
+      }
+    } else {
+      // Si no estaba asignado -> Insertar asignación (marcar)
+      const { error: insError } = await supabase
+        .from('ticket_item_assignments')
+        .insert({
+          item_id: itemId,
+          member_id: effectiveMemberId,
+        });
+
+      if (insError) {
+        console.error('[Supabase] Error al crear asignación:', insError);
+      } else {
+        isAssignedNow = true;
+      }
     }
   } catch (err) {
-    console.warn('[Supabase] Fallo al sincronizar toggle plato:', err);
+    console.warn('[Supabase] Fallo al sincronizar toggle plato en Supabase:', err);
   }
 
+  // Sincronizar también el almacén local si existe
+  toggleLocalItemClaim(salaId, eventoId, itemId, memberId);
+  const evento = getLocalEventoById(salaId, eventoId);
+  const item = evento?.items.find((i) => i.id === itemId);
+
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
-  return { success, item };
+  revalidatePath(`/sala/${salaId}`);
+  revalidatePath('/');
+
+  return {
+    success: true,
+    item: item || {
+      id: itemId,
+      name: '',
+      quantity: 1,
+      unit_price: 0,
+      total_price: 0,
+      category: 'food',
+      assignedMemberIds: isAssignedNow ? [memberId] : [],
+    },
+  };
 }
 
 export async function excluirAlcoholAction(

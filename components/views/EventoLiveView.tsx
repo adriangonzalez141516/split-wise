@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { Evento, Sala, TicketItem } from '@/lib/types';
@@ -26,10 +26,23 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
   const [items, setItems] = useState<TicketItem[]>(evento.items);
   const [transactions, setTransactions] = useState(evento.transactions);
 
+  // Sync state if server props change (revalidación o navegación)
+  useEffect(() => {
+    setItems(evento.items);
+  }, [evento.items]);
+
+  useEffect(() => {
+    setTransactions(evento.transactions);
+  }, [evento.transactions]);
+
   const carlosMember = sala.members.find(
-    (m) => m.id === 'm1' || m.id === 'user-carlos' || m.name.includes('Carlos') || m.name.includes('(Tú)')
+    (m) =>
+      m.id === 'm1' ||
+      m.id === 'user-carlos' ||
+      m.name.includes('(Tú)') ||
+      m.name.toLowerCase().includes('carlos')
   );
-  const currentUserId = carlosMember ? carlosMember.id : 'm1';
+  const currentUserId = carlosMember ? carlosMember.id : (sala.members[0]?.id || 'user-carlos');
 
   // Toggle item claim for Carlos
   const handleToggleClaim = async (itemId: string) => {
