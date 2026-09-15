@@ -8,6 +8,7 @@ import {
   excludeAlcoholForMember,
   addItemToEvento,
   addMultipleItemsToEvento,
+  createEvento,
   CURRENT_USER_ID,
 } from '@/lib/store';
 import { Evento, TicketItem } from '@/lib/types';
@@ -123,4 +124,24 @@ export async function anadirPlatosDesdeTicketAction(
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
   return { success: items.length > 0, addedCount: items.length, items };
+}
+
+export async function crearEventoAction(
+  salaId: string,
+  eventData: {
+    title: string;
+    venue: string;
+    table?: string;
+    date?: string;
+    originalPayerId?: string;
+  }
+): Promise<{ success: boolean; evento?: Evento }> {
+  const evento = createEvento(salaId, eventData);
+  if (evento) {
+    revalidatePath(`/sala/${salaId}`);
+    revalidatePath(`/sala/${salaId}/evento/${evento.id}`);
+    revalidatePath('/');
+    return { success: true, evento };
+  }
+  return { success: false };
 }

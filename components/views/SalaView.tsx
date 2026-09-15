@@ -7,6 +7,7 @@ import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import ScanTicketModal from '@/components/modals/ScanTicketModal';
 import SettlementActionsModal, { MemberBalanceInfo } from '@/components/modals/SettlementActionsModal';
+import CreateEventoModal from '@/components/modals/CreateEventoModal';
 import { anadirMiembroVirtualAction } from '@/actions/salas.actions';
 
 interface SalaViewProps {
@@ -19,6 +20,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showCreateEventoModal, setShowCreateEventoModal] = useState(false);
   const [showAddVirtualModal, setShowAddVirtualModal] = useState(false);
   const [settlementModalTab, setSettlementModalTab] = useState<'request' | 'pay' | 'room_close' | null>(null);
   const [virtualName, setVirtualName] = useState('');
@@ -153,33 +155,21 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             type="button"
+            onClick={() => setShowCreateEventoModal(true)}
+            className="py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98"
+          >
+            <span className="material-symbols-outlined text-[17px]">add_circle</span>
+            <span className="whitespace-nowrap">Nuevo Evento</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowScanModal(true)}
-            className="py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98"
+            className="py-2.5 px-3 rounded-xl bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-98"
           >
             <span className="material-symbols-outlined text-[17px]">receipt_long</span>
             <span className="whitespace-nowrap">Escanear Ticket IA</span>
           </button>
-
-          {liveEvent ? (
-            <Link
-              href={`/sala/${sala.id}/evento/${liveEvent.id}`}
-              className="py-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-600/30 text-emerald-800 hover:bg-emerald-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-98"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-              </span>
-              <span className="whitespace-nowrap">Entrar a Mesa</span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowScanModal(true)}
-              className="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-colors"
-            >
-              <span>Nuevo Evento</span>
-            </button>
-          )}
         </div>
       </section>
 
@@ -401,9 +391,19 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
 
       {/* Historial de Consumos en Sala */}
       <section className="fintech-card p-4.5 flex flex-col gap-2.5">
-        <h3 className="text-xs font-extrabold text-slate-900 font-heading uppercase tracking-wider">
-          Historial de Consumos
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-extrabold text-slate-900 font-heading uppercase tracking-wider">
+            Historial de Consumos ({sala.eventos.length})
+          </h3>
+          <button
+            type="button"
+            onClick={() => setShowCreateEventoModal(true)}
+            className="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1 active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-sm">add_circle</span>
+            <span>Nuevo evento</span>
+          </button>
+        </div>
         <div className="flex flex-col gap-2">
           {sala.eventos.map((ev) => (
             <div
@@ -443,6 +443,12 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
         maxEvents={sala.pass.maxEvents}
       />
       <ScanTicketModal isOpen={showScanModal} onClose={() => setShowScanModal(false)} />
+      <CreateEventoModal
+        sala={sala}
+        isOpen={showCreateEventoModal}
+        onClose={() => setShowCreateEventoModal(false)}
+        onOpenScan={() => setShowScanModal(true)}
+      />
       <SettlementActionsModal
         isOpen={settlementModalTab !== null}
         initialTab={settlementModalTab || 'request'}

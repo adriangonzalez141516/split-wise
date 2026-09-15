@@ -542,3 +542,47 @@ export function addMultipleItemsToEvento(
   evento.totalAmount = Math.round((evento.totalAmount + addedTotal) * 100) / 100;
   return addedItems;
 }
+
+/**
+ * Mutation: Create a new event in a room
+ */
+export function createEvento(
+  salaId: string,
+  eventData: {
+    title: string;
+    venue: string;
+    table?: string;
+    date?: string;
+    originalPayerId?: string;
+  }
+): Evento | undefined {
+  const sala = getSalaById(salaId);
+  if (!sala) return undefined;
+
+  const newEventoId = `evento-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const newEvento: Evento = {
+    id: newEventoId,
+    salaId,
+    title: eventData.title || `Evento #${sala.eventos.length + 1}`,
+    venue: eventData.venue || 'Restaurante',
+    table: eventData.table || 'Mesa 1',
+    date: eventData.date || new Date().toISOString().split('T')[0],
+    status: 'en_curso',
+    originalPayerId: eventData.originalPayerId || sala.members[0]?.id || CURRENT_USER_ID,
+    suggestedPayerId: eventData.originalPayerId || sala.members[0]?.id || CURRENT_USER_ID,
+    items: [],
+    commonCosts: [],
+    globalModifiers: {},
+    totalAmount: 0,
+    transactions: [],
+  };
+
+  sala.eventos.unshift(newEvento);
+  sala.lastActivityAt = new Date().toISOString();
+  if (sala.pass && sala.pass.eventsUsed !== undefined) {
+    sala.pass.eventsUsed = Math.min(sala.pass.maxEvents, sala.pass.eventsUsed + 1);
+  }
+
+  return newEvento;
+}
+
