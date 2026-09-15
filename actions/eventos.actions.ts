@@ -201,37 +201,84 @@ export async function anadirPlatoAction(
   eventoId: string,
   platoData: Omit<TicketItem, 'id'>
 ): Promise<{ success: boolean; item?: TicketItem }> {
-  const item = addLocalItemToEvento(salaId, eventoId, platoData);
+  const itemId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const qty = Math.max(1, platoData.quantity || 1);
+  const uPrice = Number(platoData.unit_price || 0);
+  const tPrice = Math.round(qty * uPrice * 100) / 100;
 
-  if (item) {
-    try {
-      const supabase = getSupabaseServer();
-      await supabase.from('ticket_items').insert({
-        id: item.id,
-        evento_id: eventoId,
-        name: item.name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-        category: item.category,
-      });
+  // Normalizar assignedMemberIds asegurando compatibilidad de identificadores
+  const assigned = (platoData.assignedMemberIds && platoData.assignedMemberIds.length > 0)
+    ? platoData.assignedMemberIds.map((id) => (id === 'user-carlos' ? 'm1' : id))
+    : ['m1'];
 
-      if (item.assignedMemberIds.length > 0) {
-        await supabase.from('ticket_item_assignments').insert(
-          item.assignedMemberIds.map((mId) => ({
-            item_id: item.id,
+  const newItem: TicketItem = {
+    id: itemId,
+    name: platoData.name,
+    quantity: qty,
+    unit_price: uPrice,
+    total_price: tPrice,
+    category: platoData.category || 'food',
+    assignedMemberIds: assigned,
+  };
+
+  try {
+    const supabase = getSupabaseServer();
+    const { error: itemError } = await supabase.from('ticket_items').insert({
+      id: newItem.id,
+      evento_id: eventoId,
+      name: newItem.name,
+      quantity: newItem.quantity,
+      unit_price: newItem.unit_price,
+      total_price: newItem.total_price,
+      category: newItem.category,
+    });
+
+    if (itemError) {
+      console.error('[Supabase] Error inserting ticket_item:', itemError);
+    } else {
+      if (assigned.length > 0) {
+        const { data: validMembers } = await supabase
+          .from('sala_members')
+          .select('id')
+          .eq('sala_id', salaId);
+        const validIds = new Set((validMembers || []).map((m) => m.id));
+
+        const assignmentsToInsert = assigned
+          .filter((mId) => validIds.has(mId))
+          .map((mId) => ({
+            item_id: newItem.id,
             member_id: mId,
-          }))
-        );
+          }));
+
+        if (assignmentsToInsert.length > 0) {
+          const { error: assignError } = await supabase
+            .from('ticket_item_assignments')
+            .insert(assignmentsToInsert);
+          if (assignError) console.error('[Supabase] Error inserting assignments:', assignError);
+        }
       }
-    } catch (err) {
-      console.warn('[Supabase] Fallo al sincronizar plato en Supabase:', err);
+
+      // Actualizar total_amount del evento
+      const { data: allItems } = await supabase
+        .from('ticket_items')
+        .select('total_price')
+        .eq('evento_id', eventoId);
+      if (allItems) {
+        const sum = allItems.reduce((acc, curr) => acc + Number(curr.total_price || 0), 0);
+        await supabase.from('eventos').update({ total_amount: Math.round(sum * 100) / 100 }).eq('id', eventoId);
+      }
     }
+  } catch (err) {
+    console.warn('[Supabase] Fallo al insertar plato en Supabase:', err);
   }
+
+  // Sincronizar en tienda local si existe
+  addLocalItemToEvento(salaId, eventoId, platoData);
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
-  return { success: !!item, item };
+  revalidatePath('/');
+  return { success: true, item: newItem };
 }
 
 export async function anadirPlatosDesdeTicketAction(
@@ -239,39 +286,90 @@ export async function anadirPlatosDesdeTicketAction(
   eventoId: string,
   platos: Omit<TicketItem, 'id'>[]
 ): Promise<{ success: boolean; addedCount: number; items: TicketItem[] }> {
-  const items = addLocalMultipleItemsToEvento(salaId, eventoId, platos);
+  if (!platos || platos.length === 0) {
+    return { success: false, addedCount: 0, items: [] };
+  }
 
-  if (items.length > 0) {
-    try {
-      const supabase = getSupabaseServer();
-      for (const item of items) {
-        await supabase.from('ticket_items').insert({
-          id: item.id,
-          evento_id: eventoId,
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          category: item.category,
-        });
+  const createdItems: TicketItem[] = [];
 
-        if (item.assignedMemberIds.length > 0) {
-          await supabase.from('ticket_item_assignments').insert(
-            item.assignedMemberIds.map((mId) => ({
-              item_id: item.id,
-              member_id: mId,
-            }))
-          );
+  try {
+    const supabase = getSupabaseServer();
+
+    const { data: validMembers } = await supabase
+      .from('sala_members')
+      .select('id')
+      .eq('sala_id', salaId);
+    const validIds = new Set((validMembers || []).map((m) => m.id));
+
+    for (const plato of platos) {
+      const itemId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const qty = Math.max(1, plato.quantity || 1);
+      const uPrice = Number(plato.unit_price || 0);
+      const tPrice = Math.round(qty * uPrice * 100) / 100;
+
+      const assigned = (plato.assignedMemberIds && plato.assignedMemberIds.length > 0)
+        ? plato.assignedMemberIds.map((id) => (id === 'user-carlos' ? 'm1' : id))
+        : ['m1'];
+
+      const newItem: TicketItem = {
+        id: itemId,
+        name: plato.name,
+        quantity: qty,
+        unit_price: uPrice,
+        total_price: tPrice,
+        category: plato.category || 'food',
+        assignedMemberIds: assigned,
+      };
+
+      createdItems.push(newItem);
+
+      const { error: itemError } = await supabase.from('ticket_items').insert({
+        id: newItem.id,
+        evento_id: eventoId,
+        name: newItem.name,
+        quantity: newItem.quantity,
+        unit_price: newItem.unit_price,
+        total_price: newItem.total_price,
+        category: newItem.category,
+      });
+
+      if (itemError) {
+        console.error('[Supabase] Error inserting item from ticket:', itemError);
+      } else {
+        const assignmentsToInsert = assigned
+          .filter((mId) => validIds.has(mId))
+          .map((mId) => ({
+            item_id: newItem.id,
+            member_id: mId,
+          }));
+
+        if (assignmentsToInsert.length > 0) {
+          await supabase.from('ticket_item_assignments').insert(assignmentsToInsert);
         }
       }
-    } catch (err) {
-      console.warn('[Supabase] Fallo al sincronizar platos múltiples:', err);
     }
+
+    // Actualizar total_amount del evento
+    const { data: allItems } = await supabase
+      .from('ticket_items')
+      .select('total_price')
+      .eq('evento_id', eventoId);
+    if (allItems) {
+      const sum = allItems.reduce((acc, curr) => acc + Number(curr.total_price || 0), 0);
+      await supabase.from('eventos').update({ total_amount: Math.round(sum * 100) / 100 }).eq('id', eventoId);
+    }
+  } catch (err) {
+    console.warn('[Supabase] Fallo al insertar platos múltiples en Supabase:', err);
   }
+
+  // Sincronizar en tienda local
+  addLocalMultipleItemsToEvento(salaId, eventoId, platos);
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
-  return { success: items.length > 0, addedCount: items.length, items };
+  revalidatePath('/');
+
+  return { success: createdItems.length > 0, addedCount: createdItems.length, items: createdItems };
 }
 
 export async function crearEventoAction(

@@ -26,7 +26,10 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
   const [items, setItems] = useState<TicketItem[]>(evento.items);
   const [transactions, setTransactions] = useState(evento.transactions);
 
-  const currentUserId = 'user-carlos';
+  const carlosMember = sala.members.find(
+    (m) => m.id === 'm1' || m.id === 'user-carlos' || m.name.includes('Carlos') || m.name.includes('(Tú)')
+  );
+  const currentUserId = carlosMember ? carlosMember.id : 'm1';
 
   // Toggle item claim for Carlos
   const handleToggleClaim = async (itemId: string) => {

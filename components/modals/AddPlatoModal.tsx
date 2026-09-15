@@ -137,13 +137,18 @@ export default function AddPlatoModal({
 
     // Prepare extracted items assigned to all members by default
     const allMemberIds = members.map((m) => m.id);
+    const selfMember = members.find(
+      (m) => m.id === currentUserId || m.name.includes('Carlos') || m.name.includes('(Tú)')
+    );
+    const effectiveUserId = selfMember ? selfMember.id : members[0]?.id || currentUserId;
+
     const extracted: Omit<TicketItem, 'id'>[] = selectedTicketSample.items.map((i) => ({
       name: i.name,
       quantity: i.quantity,
       unit_price: i.unit_price,
       total_price: Math.round(i.quantity * i.unit_price * 100) / 100,
       category: i.category,
-      assignedMemberIds: i.category === 'alcohol' ? [currentUserId] : allMemberIds,
+      assignedMemberIds: i.category === 'alcohol' ? [effectiveUserId] : allMemberIds,
     }));
 
     setScannedItems(extracted);
