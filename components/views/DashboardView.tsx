@@ -13,19 +13,12 @@ interface DashboardViewProps {
 }
 
 export default function DashboardView({ wallet, salas }: DashboardViewProps) {
-  const [activeFilter, setActiveFilter] = useState<'todas' | 'botes' | 'pases'>('todas');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newSalaName, setNewSalaName] = useState('');
   const [newSalaDesc, setNewSalaDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-
-  const filteredSalas = salas.filter((sala) => {
-    if (activeFilter === 'botes') return sala.boteComun > 0;
-    if (activeFilter === 'pases') return sala.pass.status === 'activo';
-    return true;
-  });
 
   const handleCreateSala = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,57 +153,16 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
         </div>
       </section>
 
-      {/* Quick Filters */}
-      <section className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-        <button
-          type="button"
-          onClick={() => setActiveFilter('todas')}
-          className={`whitespace-nowrap px-4 py-2 rounded-full text-xs transition-all ${
-            activeFilter === 'todas'
-              ? 'bg-emerald-700 text-white font-bold shadow-xs'
-              : 'bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 font-medium'
-          }`}
-        >
-          Todas las salas
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveFilter('botes')}
-          className={`whitespace-nowrap px-4 py-2 rounded-full text-xs transition-all flex items-center gap-1.5 ${
-            activeFilter === 'botes'
-              ? 'bg-emerald-700 text-white font-bold shadow-xs'
-              : 'bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px]">savings</span>
-          <span>Botes comunes</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveFilter('pases')}
-          className={`whitespace-nowrap px-4 py-2 rounded-full text-xs transition-all flex items-center gap-1.5 ${
-            activeFilter === 'pases'
-              ? 'bg-emerald-700 text-white font-bold shadow-xs'
-              : 'bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px]">workspace_premium</span>
-          <span>Pases Anfitrión</span>
-        </button>
-      </section>
-
       {/* 2. Salas / Grupos List */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-extrabold text-slate-900 font-heading uppercase tracking-wider">
             Tus Salas Activas
           </h2>
-          <span className="text-xs text-slate-500 font-medium">{filteredSalas.length} en total</span>
+          <span className="text-xs text-slate-500 font-medium">{salas.length} en total</span>
         </div>
 
-        {filteredSalas.map((sala) => {
+        {salas.map((sala) => {
           const liveEvent = sala.eventos.find((e) => e.status === 'en_curso');
           const isFeatured = sala.id === 'cenas-viernes';
 
