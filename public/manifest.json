@@ -1,0 +1,16 @@
+{
+  "name": "Stitch — Plataforma de Gastos Compartidos PWA",
+  "short_name": "Stitch",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f9ff",
+  "theme_color": "#006948",
+  "description": "Gestión de gastos colaborativa en tiempo real, división inteligente de tickets con IA y liquidación Min-Cash-Flow.",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
