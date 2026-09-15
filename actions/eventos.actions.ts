@@ -284,29 +284,56 @@ export async function crearEventoAction(
     originalPayerId?: string;
   }
 ): Promise<{ success: boolean; evento?: Evento }> {
-  const evento = createLocalEvento(salaId, eventData);
+  const newEventoId = `ev-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const dateStr = eventData.date || new Date().toISOString().split('T')[0];
+  const titleStr = eventData.title || eventData.venue || 'Nuevo Evento';
+  const venueStr = eventData.venue || 'Restaurante';
+  const payerId = eventData.originalPayerId || 'm1';
 
-  if (evento) {
-    try {
-      const supabase = getSupabaseServer();
-      await supabase.from('eventos').insert({
-        id: evento.id,
-        sala_id: salaId,
-        title: evento.title,
-        venue: evento.venue,
-        date: evento.date || new Date().toISOString().split('T')[0],
-        status: 'en_curso',
-        original_payer_id: evento.originalPayerId,
-        total_amount: evento.totalAmount || 0,
-      });
-    } catch (err) {
-      console.warn('[Supabase] Fallo al insertar evento en Supabase:', err);
+  const newEvento: Evento = {
+    id: newEventoId,
+    salaId,
+    title: titleStr,
+    venue: venueStr,
+    table: eventData.table || 'Mesa 1',
+    date: dateStr,
+    status: 'en_curso',
+    originalPayerId: payerId,
+    suggestedPayerId: payerId,
+    items: [],
+    commonCosts: [],
+    globalModifiers: {},
+    totalAmount: 0,
+    transactions: [],
+  };
+
+  try {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase.from('eventos').insert({
+      id: newEvento.id,
+      sala_id: salaId,
+      title: newEvento.title,
+      venue: newEvento.venue,
+      date: newEvento.date,
+      status: 'en_curso',
+      original_payer_id: newEvento.originalPayerId,
+      total_amount: 0,
+    });
+
+    if (error) {
+      console.error('[Supabase] Error al insertar evento:', error);
     }
-
-    revalidatePath(`/sala/${salaId}`);
-    revalidatePath(`/sala/${salaId}/evento/${evento.id}`);
-    revalidatePath('/');
-    return { success: true, evento };
+  } catch (err) {
+    console.warn('[Supabase] Fallo al insertar evento en Supabase:', err);
   }
-  return { success: false };
+
+  const localSala = getLocalSalaById(salaId);
+  if (localSala) {
+    localSala.eventos.unshift(newEvento);
+  }
+
+  revalidatePath(`/sala/${salaId}`);
+  revalidatePath(`/sala/${salaId}/evento/${newEvento.id}`);
+  revalidatePath('/');
+  return { success: true, evento: newEvento };
 }

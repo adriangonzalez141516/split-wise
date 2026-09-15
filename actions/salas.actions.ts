@@ -20,7 +20,14 @@ export async function getSalasAction(): Promise<Sala[]> {
       .select(`
         *,
         members:sala_members(*),
-        eventos(*)
+        eventos(
+          *,
+          items:ticket_items(
+            *,
+            assignments:ticket_item_assignments(*)
+          ),
+          liquidaciones(*)
+        )
       `)
       .order('created_at', { ascending: false });
 
@@ -54,11 +61,31 @@ export async function getSalasAction(): Promise<Sala[]> {
           date: String(e.date),
           status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
           originalPayerId: String(e.original_payer_id || 'm1'),
-          items: [],
+          items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
+            id: String(it.id),
+            name: String(it.name),
+            quantity: Number(it.quantity || 1),
+            unit_price: Number(it.unit_price || 0),
+            total_price: Number(it.total_price || 0),
+            category: (it.category as TicketItem['category']) || 'food',
+            assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
+              String(a.member_id)
+            ),
+          })),
           commonCosts: [],
           globalModifiers: {},
           totalAmount: Number(e.total_amount || 0),
-          transactions: [],
+          transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
+            id: String(l.id),
+            fromMemberId: String(l.from_member_id),
+            toMemberId: String(l.to_member_id),
+            amount: Number(l.amount || 0),
+            status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
+            suggestedAt: String(l.suggested_at || new Date().toISOString()),
+            updatedAt: String(l.updated_at || new Date().toISOString()),
+            note: l.note ? String(l.note) : undefined,
+            ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
+          })),
         })),
         createdAt: s.created_at || new Date().toISOString(),
         lastActivityAt: s.last_activity_at || new Date().toISOString(),
@@ -198,26 +225,43 @@ export async function crearSalaAction(name: string, description: string): Promis
 }
 
 export async function anadirMiembroVirtualAction(salaId: string, name: string): Promise<Member | null> {
-  const member = addLocalVirtualMember(salaId, name);
+  const memberId = `guest-${Date.now().toString().slice(-6)}`;
+  const cleanName = name.trim().endsWith('*') ? name.trim() : `${name.trim()}*`;
+  const claimToken = `token-${Math.random().toString(36).substring(2, 8)}`;
 
-  if (member) {
-    try {
-      const supabase = getSupabaseServer();
-      await supabase.from('sala_members').insert({
-        id: member.id,
-        sala_id: salaId,
-        name: member.name,
-        is_virtual: true,
-        claim_token: member.claimToken || null,
-      });
-    } catch (err) {
-      console.warn('[Supabase] Fallo al insertar miembro virtual en Supabase:', err);
+  const newMember: Member = {
+    id: memberId,
+    name: cleanName,
+    alias: cleanName,
+    isVirtual: true,
+    claimToken,
+  };
+
+  try {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase.from('sala_members').insert({
+      id: newMember.id,
+      sala_id: salaId,
+      name: newMember.name,
+      is_virtual: true,
+      claim_token: newMember.claimToken,
+    });
+    if (error) {
+      console.error('[Supabase] Error al insertar miembro virtual:', error);
     }
-
-    revalidatePath(`/sala/${salaId}`);
+  } catch (err) {
+    console.warn('[Supabase] Fallo al insertar miembro virtual en Supabase:', err);
   }
 
-  return member || null;
+  // Sincronizar en store local si existe la sala
+  const localSala = getLocalSalaById(salaId);
+  if (localSala) {
+    localSala.members.push(newMember);
+  }
+
+  revalidatePath(`/sala/${salaId}`);
+  revalidatePath('/');
+  return newMember;
 }
 
 export async function reclamarCuentaVirtualAction(

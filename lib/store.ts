@@ -1,63 +1,59 @@
 import { Sala, Evento, UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction, Member, TicketItem } from './types';
 import { calculateMinCashFlow, identifySuggestedPayer } from './min-cash-flow';
 
-// Initial Mock Seed Data matching Stitch designs & technical specifications
+// Initial Seed Data aligning directly with Supabase remote database (cenas-viernes)
 const initialSeedSalas: Sala[] = [
   {
     id: 'cenas-viernes',
     name: 'Cenas de los Viernes',
-    description: 'Grupo permanente de ocio y gastronomía',
+    description: 'Grupo gastronómico semanal y cañas de fin de semana',
     icon: 'restaurant',
     debtThreshold: -50.0,
-    boteComun: 18.5,
+    boteComun: 45.0,
     pass: {
       type: 'pase_sala',
       status: 'activo',
-      eventsUsed: 2,
+      eventsUsed: 3,
       maxEvents: 20,
-      purchasedByMemberId: 'user-carlos',
+      purchasedByMemberId: 'm1',
       expiresAt: '2026-12-31',
     },
     members: [
       {
-        id: 'user-carlos',
-        name: 'Carlos (Tú)',
-        alias: 'Carlos',
-        phone: '600 112 233',
+        id: 'm1',
+        name: 'Carlos M. (Tú)',
+        phone: '+34 600 112 233',
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         isVirtual: false,
       },
       {
-        id: 'user-mateo',
-        name: 'Mateo',
-        phone: '612 345 678',
+        id: 'm2',
+        name: 'Mateo R.',
+        phone: '+34 611 223 344',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
         isVirtual: false,
       },
       {
-        id: 'user-javi',
-        name: 'Javi',
-        phone: '698 765 432',
+        id: 'm3',
+        name: 'Sofía L.',
+        phone: '+34 622 334 455',
+        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
         isVirtual: false,
       },
       {
-        id: 'user-laura',
-        name: 'Laura',
-        phone: '655 432 109',
-        isVirtual: false,
-      },
-      {
-        id: 'user-sofi',
-        name: 'Sofi',
-        phone: '677 889 900',
-        isVirtual: false,
-      },
-      {
-        id: 'guest-marta',
-        name: 'Marta (Invitada)*',
-        alias: 'Marta*',
-        phone: '654 112 233',
+        id: 'm4',
+        name: 'Elena V. (Invitada)',
+        phone: '+34 633 445 566',
+        avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
         isVirtual: true,
-        claimToken: 'token-marta-9876',
+        claimToken: 'token-elena-4455',
+      },
+      {
+        id: 'm5',
+        name: 'Lucas B.',
+        phone: '+34 644 556 677',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        isVirtual: false,
       },
     ],
     createdAt: '2026-01-10T19:00:00Z',
@@ -66,178 +62,66 @@ const initialSeedSalas: Sala[] = [
       {
         id: 'taberna-ilustres',
         salaId: 'cenas-viernes',
-        title: 'Cenas de los Viernes #2',
+        title: 'Cena Gourmet Los Ilustres',
         venue: 'Taberna Los Ilustres',
         table: 'Mesa 14',
         date: '2026-09-15',
         status: 'en_curso',
-        originalPayerId: 'user-mateo', // Suggested payer (Rule 1) paying bill to restaurant
-        suggestedPayerId: 'user-mateo',
+        originalPayerId: 'm2',
+        suggestedPayerId: 'm2',
         items: [
           {
-            id: 'item-1',
-            name: 'Croquetas de Jamón Ibérico',
-            quantity: 2,
-            unit_price: 9.5,
-            total_price: 19.0,
-            category: 'food',
-            assignedMemberIds: ['user-carlos', 'user-mateo', 'user-javi', 'user-laura'],
-          },
-          {
-            id: 'item-2',
-            name: 'Pulpo a la Gallega',
-            quantity: 1,
-            unit_price: 24.5,
-            total_price: 24.5,
-            category: 'food',
-            assignedMemberIds: ['user-carlos', 'user-mateo', 'user-laura', 'user-sofi', 'guest-marta'],
-          },
-          {
-            id: 'item-3',
-            name: 'Chuletón de Vaca 1kg',
+            id: 'item_1',
+            name: 'Chuletón de Vaca Madurada (1kg)',
             quantity: 1,
             unit_price: 68.0,
             total_price: 68.0,
             category: 'food',
-            assignedMemberIds: ['user-mateo', 'user-javi', 'user-laura'],
+            assignedMemberIds: ['m1', 'm2', 'm5'],
           },
           {
-            id: 'item-4',
-            name: 'Ribera del Duero (x2)',
+            id: 'item_2',
+            name: 'Vino Ribera del Duero Reserva',
             quantity: 2,
-            unit_price: 18.0,
-            total_price: 36.0,
+            unit_price: 24.0,
+            total_price: 48.0,
             category: 'alcohol',
-            assignedMemberIds: ['user-mateo', 'user-javi', 'user-laura', 'user-sofi'],
+            assignedMemberIds: ['m1', 'm2'],
           },
           {
-            id: 'item-5',
-            name: 'Tarta Queso Idiazábal',
-            quantity: 1,
-            unit_price: 17.0,
-            total_price: 17.0,
+            id: 'item_3',
+            name: 'Croquetas de Jamón Ibérico (8ud)',
+            quantity: 2,
+            unit_price: 12.0,
+            total_price: 24.0,
+            category: 'food',
+            assignedMemberIds: ['m1', 'm2', 'm3', 'm4', 'm5'],
+          },
+          {
+            id: 'item_4',
+            name: 'Tarta de Queso Idiazábal Fluida',
+            quantity: 3,
+            unit_price: 7.5,
+            total_price: 22.5,
             category: 'dessert',
-            assignedMemberIds: ['user-carlos', 'user-mateo', 'user-javi', 'user-laura', 'user-sofi', 'guest-marta'],
-          },
-        ],
-        commonCosts: [
-          {
-            name: 'Pan, Aperitivo y Servicio de Mesa',
-            amount: 6.0,
-            splitType: 'equitativo',
-          },
-        ],
-        globalModifiers: {
-          service_charge: 14.0,
-        },
-        totalAmount: 184.5,
-        transactions: [
-          {
-            id: 'tx-1',
-            fromMemberId: 'user-mateo',
-            toMemberId: 'user-carlos',
-            amount: 42.5,
-            status: 'pendiente',
-            suggestedAt: '2026-09-15T12:05:00Z',
-            updatedAt: '2026-09-15T12:05:00Z',
-            note: 'Por Bizum directo',
-            ruleApplied: 'regla_4_min_cash_flow',
+            assignedMemberIds: ['m3', 'm4', 'm5'],
           },
           {
-            id: 'tx-2',
-            fromMemberId: 'user-javi',
-            toMemberId: 'user-carlos',
-            amount: 18.3,
-            status: 'pendiente',
-            suggestedAt: '2026-09-15T12:06:00Z',
-            updatedAt: '2026-09-15T12:06:00Z',
-            note: 'Por Bizum directo',
-            ruleApplied: 'regla_4_min_cash_flow',
-          },
-          {
-            id: 'tx-3',
-            fromMemberId: 'guest-marta',
-            toMemberId: 'user-mateo',
-            amount: 9.2,
-            status: 'propuesta',
-            suggestedAt: '2026-09-15T12:07:00Z',
-            updatedAt: '2026-09-15T12:07:00Z',
-            note: 'Liquidación externa',
-            ruleApplied: 'regla_4_min_cash_flow',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'piso-calle-mayor',
-    name: 'Piso Calle Mayor',
-    description: 'Compra mensual Mercadona y suministros',
-    icon: 'home',
-    debtThreshold: -50.0,
-    boteComun: 45.0,
-    pass: {
-      type: 'pase_sala',
-      status: 'inactivo',
-      eventsUsed: 0,
-      maxEvents: 20,
-    },
-    members: [
-      { id: 'user-carlos', name: 'Carlos (Tú)', isVirtual: false },
-      { id: 'user-mateo', name: 'Mateo', isVirtual: false },
-      { id: 'user-javi', name: 'Javi', isVirtual: false },
-      { id: 'user-lucia', name: 'Lucía', isVirtual: false },
-    ],
-    createdAt: '2026-02-01T10:00:00Z',
-    lastActivityAt: '2026-09-13T18:00:00Z',
-    eventos: [
-      {
-        id: 'compra-mercadona-sept',
-        salaId: 'piso-calle-mayor',
-        title: 'Compra Mercadona Septiembre',
-        venue: 'Mercadona',
-        date: '2026-09-13',
-        status: 'cerrado',
-        originalPayerId: 'user-mateo',
-        items: [
-          {
-            id: 'm-1',
-            name: 'Limpieza y básicos',
-            quantity: 1,
-            unit_price: 50.0,
-            total_price: 50.0,
-            category: 'service',
-            assignedMemberIds: ['user-carlos', 'user-mateo', 'user-javi', 'user-lucia'],
+            id: 'item_5',
+            name: 'Aguas Minerales & Cafés Solo',
+            quantity: 4,
+            unit_price: 3.0,
+            total_price: 12.0,
+            category: 'standard_drink',
+            assignedMemberIds: ['m1', 'm2', 'm3', 'm4'],
           },
         ],
         commonCosts: [],
         globalModifiers: {},
-        totalAmount: 50.0,
+        totalAmount: 184.5,
         transactions: [],
       },
     ],
-  },
-  {
-    id: 'viaje-asturias-2024',
-    name: 'Viaje Asturias 2024',
-    description: '8 miembros • Todo saldado vía Bizum',
-    icon: 'check_circle',
-    debtThreshold: -50.0,
-    boteComun: 0.0,
-    pass: {
-      type: 'pase_sala',
-      status: 'activo',
-      eventsUsed: 4,
-      maxEvents: 20,
-    },
-    members: [
-      { id: 'user-carlos', name: 'Carlos (Tú)', isVirtual: false },
-      { id: 'user-mateo', name: 'Mateo', isVirtual: false },
-      { id: 'user-javi', name: 'Javi', isVirtual: false },
-    ],
-    createdAt: '2026-08-01T10:00:00Z',
-    lastActivityAt: '2026-08-15T20:00:00Z',
-    eventos: [],
   },
 ];
 
@@ -247,14 +131,12 @@ declare global {
   var __stitch_salas_store__: Sala[] | undefined;
 }
 
-if (!globalThis.__stitch_salas_store__) {
-  globalThis.__stitch_salas_store__ = initialSeedSalas;
-}
+globalThis.__stitch_salas_store__ = initialSeedSalas;
 
 const salasStore: Sala[] = globalThis.__stitch_salas_store__;
 
-// Current logged in user ID
-export const CURRENT_USER_ID = 'user-carlos';
+// Current logged in user ID (m1 in Supabase seed, mapped to Carlos)
+export const CURRENT_USER_ID = 'm1';
 
 // Get all rooms
 export function getSalas(): Sala[] {

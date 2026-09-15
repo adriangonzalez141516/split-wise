@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { UserGlobalWallet, Sala } from '@/lib/types';
+import { calculateRoomBalance, CURRENT_USER_ID } from '@/lib/store';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import { crearSalaAction } from '@/actions/salas.actions';
@@ -91,16 +92,36 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             BALANCE GLOBAL NETO
           </span>
-          <span className="fintech-pill px-3 py-1 bg-emerald-50 text-emerald-800 text-xs border border-emerald-200/70">
-            <span className="material-symbols-outlined text-[15px] font-bold">trending_up</span>
-            A tu favor
-          </span>
+          {wallet.netBalanceTotal > 0 ? (
+            <span className="fintech-pill px-3 py-1 bg-emerald-50 text-emerald-800 text-xs border border-emerald-200/70">
+              <span className="material-symbols-outlined text-[15px] font-bold">trending_up</span>
+              A tu favor
+            </span>
+          ) : wallet.netBalanceTotal < 0 ? (
+            <span className="fintech-pill px-3 py-1 bg-amber-50 text-amber-800 text-xs border border-amber-200/70">
+              <span className="material-symbols-outlined text-[15px] font-bold">trending_down</span>
+              Debes pagar
+            </span>
+          ) : (
+            <span className="fintech-pill px-3 py-1 bg-slate-100 text-slate-700 text-xs border border-slate-200">
+              <span className="material-symbols-outlined text-[15px] font-bold">check_circle</span>
+              Al día
+            </span>
+          )}
         </div>
 
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-black text-emerald-600 tracking-tight tabular-nums font-heading">
-              +{wallet.netBalanceTotal.toFixed(2).replace('.', ',')} €
+            <span className={`text-4xl font-black tracking-tight tabular-nums font-heading ${
+              wallet.netBalanceTotal > 0
+                ? 'text-emerald-600'
+                : wallet.netBalanceTotal < 0
+                ? 'text-amber-700'
+                : 'text-slate-800'
+            }`}>
+              {wallet.netBalanceTotal > 0
+                ? `+${wallet.netBalanceTotal.toFixed(2).replace('.', ',')} €`
+                : `${wallet.netBalanceTotal.toFixed(2).replace('.', ',')} €`}
             </span>
             <span className="text-xs text-slate-500 font-semibold">acumulado</span>
           </div>
@@ -161,6 +182,8 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
 
         {salas.map((sala) => {
           const isFeatured = sala.id === 'cenas-viernes';
+          const roomCalc = calculateRoomBalance(sala, CURRENT_USER_ID);
+          const net = roomCalc.netBalance;
 
           return (
             <article
@@ -191,21 +214,11 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
                     Tu balance
                   </span>
-                  {sala.id === 'cenas-viernes' && (
-                    <span className="text-lg font-black text-emerald-600 tabular-nums font-heading mt-0.5 block">
-                      +24,80 €
-                    </span>
-                  )}
-                  {sala.id === 'piso-calle-mayor' && (
-                    <span className="text-lg font-black text-amber-600 tabular-nums font-heading mt-0.5 block">
-                      -12,50 €
-                    </span>
-                  )}
-                  {sala.id === 'viaje-asturias-2024' && (
-                    <span className="text-base font-bold text-slate-500 tabular-nums font-heading mt-0.5 block">
-                      0,00 €
-                    </span>
-                  )}
+                  <span className={`text-lg font-black tabular-nums font-heading mt-0.5 block ${
+                    net > 0 ? 'text-emerald-600' : net < 0 ? 'text-amber-600' : 'text-slate-400'
+                  }`}>
+                    {net > 0 ? `+${net.toFixed(2).replace('.', ',')} €` : `${net.toFixed(2).replace('.', ',')} €`}
+                  </span>
                 </div>
               </div>
 
