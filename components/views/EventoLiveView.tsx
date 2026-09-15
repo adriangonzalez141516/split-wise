@@ -7,11 +7,7 @@ import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
-import {
-  togglePlatoClaimAction,
-  excluirAlcoholAction,
-  repartirCostesComunesAction,
-} from '@/actions/eventos.actions';
+import { togglePlatoClaimAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
 
 interface EventoLiveViewProps {
@@ -21,8 +17,6 @@ interface EventoLiveViewProps {
 
 export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
   const [activeTab, setActiveTab] = useState<'ticket' | 'balance' | 'settle'>('ticket');
-  const [noAlcohol, setNoAlcohol] = useState(false);
-  const [commonSplit, setCommonSplit] = useState<'equitativo' | 'proporcional'>('equitativo');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showAddPlatoModal, setShowAddPlatoModal] = useState(false);
@@ -50,34 +44,6 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
     );
 
     await togglePlatoClaimAction(sala.id, evento.id, itemId, currentUserId);
-  };
-
-  // Toggle alcohol exclusion
-  const handleToggleAlcohol = async () => {
-    const nextVal = !noAlcohol;
-    setNoAlcohol(nextVal);
-
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.category === 'alcohol') {
-          const newAssigned = nextVal
-            ? item.assignedMemberIds.filter((id) => id !== currentUserId)
-            : item.assignedMemberIds.includes(currentUserId)
-            ? item.assignedMemberIds
-            : [...item.assignedMemberIds, currentUserId];
-          return { ...item, assignedMemberIds: newAssigned };
-        }
-        return item;
-      })
-    );
-
-    await excluirAlcoholAction(sala.id, evento.id, currentUserId, nextVal);
-  };
-
-  // Toggle common split type
-  const handleSplitType = async (type: 'equitativo' | 'proporcional') => {
-    setCommonSplit(type);
-    await repartirCostesComunesAction(sala.id, evento.id, type);
   };
 
   // Confirm transaction settlement with confetti
@@ -129,10 +95,6 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
         const count = item.assignedMemberIds.length;
         if (count > 0) total += item.total_price / count;
       }
-    }
-    const memberCount = sala.members.length || 6;
-    for (const cc of evento.commonCosts) {
-      total += cc.amount / memberCount;
     }
     return Math.round(total * 100) / 100;
   };
@@ -305,71 +267,10 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
             </button>
           </div>
 
-          {/* Quick Diet Filter Strip & Helper */}
-          <div className="flex items-center justify-between gap-2 py-0.5">
-            <button
-              type="button"
-              onClick={handleToggleAlcohol}
-              className={`h-8 flex items-center gap-1 px-3 rounded-full border text-xs font-bold transition-all shadow-2xs shrink-0 whitespace-nowrap ${
-                noAlcohol
-                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500/20'
-                  : 'border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">no_drinks</span>
-              <span>No tomo alcohol</span>
-            </button>
-
-            <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium whitespace-nowrap">
-              <span className="material-symbols-outlined text-[14px]">touch_app</span>
-              <span>Toca para asignarte</span>
-            </div>
-          </div>
-
-          {/* Banner de Costes Comunes / Huérfanos */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="material-symbols-outlined text-amber-800 text-[18px] shrink-0">info</span>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-amber-950 font-heading truncate">
-                    Costes Comunes (6,00 €)
-                  </h4>
-                  <p className="text-[10px] text-amber-800/80 truncate">Pan y aperitivo de mesa sin comensal fijo.</p>
-                </div>
-              </div>
-              <span className="text-xs font-black text-amber-950 tabular-nums font-heading shrink-0 whitespace-nowrap">
-                6,00 €
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
-              <button
-                type="button"
-                onClick={() => handleSplitType('equitativo')}
-                className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${
-                  commonSplit === 'equitativo'
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-white border border-amber-300/80 text-amber-900 hover:bg-amber-100/50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[14px]">pie_chart</span>
-                <span className="whitespace-nowrap">Equitativo (1€/u)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSplitType('proporcional')}
-                className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${
-                  commonSplit === 'proporcional'
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-white border border-amber-300/80 text-amber-900 hover:bg-amber-100/50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[14px]">balance</span>
-                <span className="whitespace-nowrap">Proporcional</span>
-              </button>
-            </div>
+          {/* Helper hint */}
+          <div className="flex items-center justify-end gap-1 text-[11px] text-slate-400 font-medium py-0.5 whitespace-nowrap">
+            <span className="material-symbols-outlined text-[14px]">touch_app</span>
+            <span>Toca para asignarte a tus platos</span>
           </div>
 
           {/* Header de Lista de Platos con botón Añadir Plato / Escanear Ticket */}
@@ -397,15 +298,11 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
               const isClaimed = item.assignedMemberIds.includes(currentUserId);
               const assignedCount = item.assignedMemberIds.length || 1;
               const unitShare = Math.round((item.total_price / assignedCount) * 100) / 100;
-              const isAlcohol = item.category === 'alcohol';
-              const isDimmed = isAlcohol && noAlcohol;
 
               return (
                 <article
                   key={item.id}
-                  className={`fintech-card p-3.5 transition-all flex flex-col gap-2.5 ${
-                    isDimmed ? 'opacity-40 border-slate-200' : ''
-                  }`}
+                  className="fintech-card p-3.5 transition-all flex flex-col gap-2.5"
                 >
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-start gap-2.5 min-w-0">
@@ -530,16 +427,6 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
                     </div>
                   );
                 })}
-
-              <div className="py-2.5 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-bold text-slate-900 font-heading">Costes Comunes (1/{sala.members.length})</p>
-                  <span className="text-[10px] text-slate-500 block">Pan, aperitivo y servicio</span>
-                </div>
-                <span className="font-extrabold text-slate-900 tabular-nums font-heading shrink-0 whitespace-nowrap">
-                  {(6.0 / (sala.members.length || 6)).toFixed(2).replace('.', ',')} €
-                </span>
-              </div>
             </div>
 
             <button

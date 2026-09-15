@@ -6,22 +6,37 @@ import { Sala, RoomBalanceCalculation } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import ScanTicketModal from '@/components/modals/ScanTicketModal';
+import SettlementActionsModal, { MemberBalanceInfo } from '@/components/modals/SettlementActionsModal';
 import { anadirMiembroVirtualAction } from '@/actions/salas.actions';
 
 interface SalaViewProps {
   sala: Sala;
   balanceCalculation: RoomBalanceCalculation;
+  allBalances?: MemberBalanceInfo[];
 }
 
-export default function SalaView({ sala, balanceCalculation }: SalaViewProps) {
+export default function SalaView({ sala, balanceCalculation, allBalances }: SalaViewProps) {
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
   const [showAddVirtualModal, setShowAddVirtualModal] = useState(false);
+  const [settlementModalTab, setSettlementModalTab] = useState<'request' | 'pay' | 'room_close' | null>(null);
   const [virtualName, setVirtualName] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   const liveEvent = sala.eventos.find((e) => e.status === 'en_curso');
+
+  // Effective member balances list
+  const effectiveBalances: MemberBalanceInfo[] =
+    allBalances && allBalances.length > 0
+      ? allBalances
+      : sala.members.map((m) => ({
+          memberId: m.id,
+          name: m.name,
+          phone: m.phone,
+          isVirtual: m.isVirtual,
+          netBalance: m.id === 'user-carlos' ? balanceCalculation.netBalance : 0,
+        }));
 
   const handleAddVirtual = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,8 +110,12 @@ export default function SalaView({ sala, balanceCalculation }: SalaViewProps) {
         </div>
 
         <div>
-          <div className="text-4xl font-black tracking-tight text-emerald-600 tabular-nums font-heading">
-            +24,80 €
+          <div className={`text-4xl font-black tracking-tight tabular-nums font-heading ${
+            balanceCalculation.netBalance >= 0 ? 'text-emerald-600' : 'text-amber-700'
+          }`}>
+            {balanceCalculation.netBalance > 0
+              ? `+${balanceCalculation.netBalance.toFixed(2).replace('.', ',')} €`
+              : `${balanceCalculation.netBalance.toFixed(2).replace('.', ',')} €`}
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
             Posición neta interna calculada por función PL/pgSQL (<span className="font-mono text-[11px] text-slate-700 font-bold">B_s</span>)
@@ -161,6 +180,114 @@ export default function SalaView({ sala, balanceCalculation }: SalaViewProps) {
               <span>Nuevo Evento</span>
             </button>
           )}
+        </div>
+      </section>
+
+      {/* 3 Opciones de Liquidación y Puesta al Día */}
+      <section className="fintech-card p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-emerald-700 text-[18px]">currency_exchange</span>
+            <h3 className="text-xs font-black text-slate-900 font-heading uppercase tracking-wider">
+              Liquidación y Puesta al Día
+            </h3>
+          </div>
+          <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+            3 Opciones
+          </span>
+        </div>
+
+        <p className="text-[11px] text-slate-500 -mt-1 leading-normal">
+          Acciones de compensación en cascada y liquidación global de sala con saldo neto suma cero.
+        </p>
+
+        <div className="flex flex-col gap-2 pt-0.5">
+          {/* Opción 1: Solicitar que se pongan al día conmigo */}
+          <button
+            type="button"
+            onClick={() => setSettlementModalTab('request')}
+            className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 group-hover:bg-emerald-200 text-emerald-900 flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                <span className="material-symbols-outlined text-[18px]">call_received</span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-900 font-heading">
+                    1. Reclamar Cobro en Cascada
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900">
+                    Regla 2
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                  Reclama al que más debe (pasa al 2º y 3º si no cubre el total).
+                </p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-700 text-[18px] shrink-0 transition-colors">
+              chevron_right
+            </span>
+          </button>
+
+          {/* Opción 2: Ponerme al día de cobro/pago */}
+          <button
+            type="button"
+            onClick={() => setSettlementModalTab('pay')}
+            className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-amber-50/60 border border-slate-200/80 hover:border-amber-300 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 group-hover:bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                <span className="material-symbols-outlined text-[18px]">payments</span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-900 font-heading">
+                    2. Ponerme al Día (Pagar)
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
+                    Regla 3
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                  Te indica cuánto pagar y a quién (al mayor acreedor primero).
+                </p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-amber-700 text-[18px] shrink-0 transition-colors">
+              chevron_right
+            </span>
+          </button>
+
+          {/* Opción 3: Cierre de sala Min-Cash-Flow */}
+          <button
+            type="button"
+            onClick={() => setSettlementModalTab('room_close')}
+            className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-slate-200 group-hover:bg-slate-300 text-slate-800 flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                <span className="material-symbols-outlined text-[18px]">account_tree</span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-900 font-heading">
+                    3. Cierre de Sala (Min-Cash-Flow)
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-slate-200 text-slate-800">
+                    Regla 4
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                  Liquidación general optimizada para saldar toda la sala a 0,00 €.
+                </p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-slate-800 text-[18px] shrink-0 transition-colors">
+              chevron_right
+            </span>
+          </button>
         </div>
       </section>
 
@@ -316,6 +443,14 @@ export default function SalaView({ sala, balanceCalculation }: SalaViewProps) {
         maxEvents={sala.pass.maxEvents}
       />
       <ScanTicketModal isOpen={showScanModal} onClose={() => setShowScanModal(false)} />
+      <SettlementActionsModal
+        isOpen={settlementModalTab !== null}
+        initialTab={settlementModalTab || 'request'}
+        onClose={() => setSettlementModalTab(null)}
+        sala={sala}
+        allBalances={effectiveBalances}
+        currentUserId="user-carlos"
+      />
 
       {/* Add Virtual Member Modal */}
       {showAddVirtualModal && (

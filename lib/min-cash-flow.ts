@@ -105,3 +105,111 @@ export function identifySuggestedPayer(roomBalances: MemberBalance[]): string | 
 
   return suggestedMemberId;
 }
+
+export interface CascadeRequestItem {
+  debtorId: string;
+  name: string;
+  phone?: string;
+  amount: number;
+}
+
+/**
+ * Regla 2: Petición en Cascada ("Solicitar que se pongan al día conmigo").
+ * Un acreedor (saldo > 0) solicita cobrar su saldo.
+ * Se le reclama primero al deudor con mayor saldo negativo.
+ * Si su deuda no cubre el total adeudado, absorbe el 100% de ese deudor y
+ * pasa en cascada al 2º, 3º deudor etc. hasta cubrir la totalidad.
+ */
+export function calculateCascadeRequest(
+  creditorId: string,
+  balances: { memberId: string; name: string; phone?: string; netBalance: number }[]
+): { totalToCollect: number; requests: CascadeRequestItem[] } {
+  const creditor = balances.find((b) => b.memberId === creditorId);
+  const totalToCollect = creditor && creditor.netBalance > 0 ? Math.round(creditor.netBalance * 100) / 100 : 0;
+  if (totalToCollect <= 0) return { totalToCollect: 0, requests: [] };
+
+  // Deudores ordenados por mayor deuda (más negativo a menos)
+  const debtors = balances
+    .filter((b) => b.memberId !== creditorId && b.netBalance < -0.005)
+    .map((b) => ({
+      memberId: b.memberId,
+      name: b.name,
+      phone: b.phone,
+      debt: Math.round(Math.abs(b.netBalance) * 100) / 100,
+    }))
+    .sort((a, b) => b.debt - a.debt);
+
+  let remaining = totalToCollect;
+  const requests: CascadeRequestItem[] = [];
+
+  for (const d of debtors) {
+    if (remaining <= 0.005) break;
+    const take = Math.min(remaining, d.debt);
+    const roundedTake = Math.round(take * 100) / 100;
+    if (roundedTake > 0) {
+      requests.push({
+        debtorId: d.memberId,
+        name: d.name,
+        phone: d.phone,
+        amount: roundedTake,
+      });
+      remaining = Math.round((remaining - roundedTake) * 100) / 100;
+    }
+  }
+
+  return { totalToCollect, requests };
+}
+
+export interface CascadePaymentItem {
+  creditorId: string;
+  name: string;
+  phone?: string;
+  amount: number;
+}
+
+/**
+ * Regla 3: Puesta al Día en Cascada ("Ponerme al día").
+ * Un deudor (saldo < 0) quiere saldar su deuda.
+ * El sistema le asigna el pago al mayor acreedor (a quien más dinero se le deba).
+ * Si la deuda del pagador supera el crédito de este primer acreedor,
+ * se cubre el 100% de ese acreedor y el excedente va en cascada al 2º, 3º acreedor etc.
+ */
+export function calculateCascadePayment(
+  debtorId: string,
+  balances: { memberId: string; name: string; phone?: string; netBalance: number }[]
+): { totalToPay: number; payments: CascadePaymentItem[] } {
+  const debtor = balances.find((b) => b.memberId === debtorId);
+  const totalToPay = debtor && debtor.netBalance < -0.005 ? Math.round(Math.abs(debtor.netBalance) * 100) / 100 : 0;
+  if (totalToPay <= 0) return { totalToPay: 0, payments: [] };
+
+  // Acreedores ordenados por mayor crédito (a quien más se le debe)
+  const creditors = balances
+    .filter((b) => b.memberId !== debtorId && b.netBalance > 0.005)
+    .map((b) => ({
+      memberId: b.memberId,
+      name: b.name,
+      phone: b.phone,
+      credit: Math.round(b.netBalance * 100) / 100,
+    }))
+    .sort((a, b) => b.credit - a.credit);
+
+  let remaining = totalToPay;
+  const payments: CascadePaymentItem[] = [];
+
+  for (const c of creditors) {
+    if (remaining <= 0.005) break;
+    const pay = Math.min(remaining, c.credit);
+    const roundedPay = Math.round(pay * 100) / 100;
+    if (roundedPay > 0) {
+      payments.push({
+        creditorId: c.memberId,
+        name: c.name,
+        phone: c.phone,
+        amount: roundedPay,
+      });
+      remaining = Math.round((remaining - roundedPay) * 100) / 100;
+    }
+  }
+
+  return { totalToPay, payments };
+}

@@ -46,7 +46,18 @@ export default async function OrchestratorPage({ params }: PageProps) {
     if (!sala) return notFound();
 
     const balance = calculateRoomBalance(route.salaId, CURRENT_USER_ID);
-    return <SalaView sala={sala} balanceCalculation={balance} />;
+    const allBalances = sala.members.map((m) => {
+      const calc = calculateRoomBalance(sala.id, m.id);
+      return {
+        memberId: m.id,
+        name: m.name,
+        phone: m.phone,
+        isVirtual: m.isVirtual,
+        netBalance: calc.netBalance,
+      };
+    });
+
+    return <SalaView sala={sala} balanceCalculation={balance} allBalances={allBalances} />;
   }
 
   // 3. Evento Live View (/sala/[salaId]/evento/[eventoId] or /evento/[eventoId])
