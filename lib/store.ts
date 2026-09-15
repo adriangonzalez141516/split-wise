@@ -2,7 +2,7 @@ import { Sala, Evento, UserGlobalWallet, RoomBalanceCalculation, LiquidacionTran
 import { calculateMinCashFlow, identifySuggestedPayer } from './min-cash-flow';
 
 // Initial Mock Seed Data matching Stitch designs & technical specifications
-let salasStore: Sala[] = [
+const initialSeedSalas: Sala[] = [
   {
     id: 'cenas-viernes',
     name: 'Cenas de los Viernes',
@@ -241,6 +241,18 @@ let salasStore: Sala[] = [
   },
 ];
 
+// Persistent global across hot-reloads and worker processes
+declare global {
+  // eslint-disable-next-line no-var
+  var __stitch_salas_store__: Sala[] | undefined;
+}
+
+if (!globalThis.__stitch_salas_store__) {
+  globalThis.__stitch_salas_store__ = initialSeedSalas;
+}
+
+const salasStore: Sala[] = globalThis.__stitch_salas_store__;
+
 // Current logged in user ID
 export const CURRENT_USER_ID = 'user-carlos';
 
@@ -257,7 +269,16 @@ export function getSalaById(id: string): Sala | undefined {
 // Get event by ID
 export function getEventoById(salaId: string, eventoId: string): Evento | undefined {
   const sala = getSalaById(salaId);
-  return sala?.eventos.find((e) => e.id === eventoId);
+  if (sala) {
+    const ev = sala.eventos.find((e) => e.id === eventoId);
+    if (ev) return ev;
+  }
+  // Fallback: search across all rooms
+  for (const s of salasStore) {
+    const ev = s.eventos.find((e) => e.id === eventoId);
+    if (ev) return ev;
+  }
+  return undefined;
 }
 
 /**

@@ -21,8 +21,6 @@ export default function CreateEventoModal({
   const router = useRouter();
   const [venue, setVenue] = useState('');
   const [title, setTitle] = useState('');
-  const [table, setTable] = useState('Mesa 1');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [payerId, setPayerId] = useState(sala.members[0]?.id || 'user-carlos');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,11 +32,12 @@ export default function CreateEventoModal({
 
     setIsSubmitting(true);
     try {
+      const today = new Date().toISOString().split('T')[0];
       const res = await crearEventoAction(sala.id, {
         venue: venue.trim(),
-        title: title.trim() || `${venue.trim()} (${date})`,
-        table: table.trim() || 'Mesa 1',
-        date,
+        title: title.trim() || venue.trim(),
+        table: '',
+        date: today,
         originalPayerId: payerId,
       });
 
@@ -48,6 +47,7 @@ export default function CreateEventoModal({
           onOpenScan(res.evento.id);
         } else {
           router.push(`/sala/${sala.id}/evento/${res.evento.id}`);
+          router.refresh();
         }
       }
     } catch (err) {
@@ -73,7 +73,7 @@ export default function CreateEventoModal({
             </div>
             <div>
               <h2 id="create-evento-title" className="text-sm font-black text-slate-900 font-heading">
-                Nuevo Evento de Consumo
+                Nuevo Evento
               </h2>
               <p className="text-[10px] text-slate-400 truncate">{sala.name}</p>
             </div>
@@ -98,6 +98,7 @@ export default function CreateEventoModal({
             <input
               type="text"
               required
+              autoFocus
               placeholder="ej. Taberna Los Ilustres, Grosso Napoletano..."
               value={venue}
               onChange={(e) => setVenue(e.target.value)}
@@ -108,43 +109,15 @@ export default function CreateEventoModal({
           {/* Título opcional */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Título del Evento
+              Título del Evento (opcional)
             </label>
             <input
               type="text"
-              placeholder={`ej. Cenas de los Viernes #${sala.eventos.length + 1}`}
+              placeholder={`ej. Cena Viernes, Comida...`}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-600 font-medium transition-colors"
             />
-          </div>
-
-          {/* Mesa y Fecha en 2 columnas */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Mesa / Ubicación
-              </label>
-              <input
-                type="text"
-                placeholder="Mesa 14, Terraza..."
-                value={table}
-                onChange={(e) => setTable(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-600 font-medium transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Fecha
-              </label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-600 font-medium transition-colors"
-              />
-            </div>
           </div>
 
           {/* Pagador Adelantado / Sugerido */}
@@ -164,7 +137,7 @@ export default function CreateEventoModal({
               ))}
             </select>
             <span className="text-[10px] text-slate-400 block mt-1">
-              Quien adelanta el pago total al camarero o restaurante.
+              Quién adelanta el total al camarero/restaurante.
             </span>
           </div>
 
