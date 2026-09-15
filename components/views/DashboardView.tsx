@@ -209,38 +209,6 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
                 </div>
               </div>
 
-              {/* Metric Details Row (Bote + Pase IA) */}
-              <div className="bg-slate-50/90 rounded-2xl p-3 flex items-center justify-between border border-slate-200/60 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-100/70 flex items-center justify-center text-emerald-800">
-                    <span className="material-symbols-outlined text-sm">savings</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block leading-none">
-                      Bote común
-                    </span>
-                    <span className="font-extrabold text-slate-900 tabular-nums mt-0.5 block">
-                      {sala.boteComun.toFixed(2).replace('.', ',')} €
-                    </span>
-                  </div>
-                </div>
-
-                <div className="h-5 w-px bg-slate-200"></div>
-
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-emerald-700 text-sm">auto_awesome</span>
-                  <span className="text-slate-600 text-[11px] font-medium">
-                    {sala.pass.status === 'activo' ? (
-                      <>
-                        Pase activo <strong className="text-slate-900 font-bold">{sala.pass.eventsUsed}/20 IA</strong>
-                      </>
-                    ) : (
-                      <span className="text-slate-400 font-semibold">Sin pase IA</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-
               {/* Members Facepile & CTA Row */}
               <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                 <div className="flex items-center">

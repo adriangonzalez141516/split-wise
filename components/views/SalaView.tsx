@@ -105,7 +105,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
           </span>
           <span className="fintech-pill px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[11px] border border-emerald-200/70">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-            Compensación Activa
+            Sala Activa
           </span>
         </div>
 
@@ -117,9 +117,6 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
               ? `+${balanceCalculation.netBalance.toFixed(2).replace('.', ',')} €`
               : `${balanceCalculation.netBalance.toFixed(2).replace('.', ',')} €`}
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Posición neta interna calculada por función PL/pgSQL (<span className="font-mono text-[11px] text-slate-700 font-bold">B_s</span>)
-          </p>
         </div>
 
         {/* Floating Modern Metric Tiles */}
