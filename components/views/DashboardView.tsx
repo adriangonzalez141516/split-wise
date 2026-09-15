@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { UserGlobalWallet, Sala } from '@/lib/types';
 import { calculateRoomBalance, CURRENT_USER_ID } from '@/lib/store';
 import QrModal from '@/components/modals/QrModal';
@@ -14,6 +15,7 @@ interface DashboardViewProps {
 }
 
 export default function DashboardView({ wallet, salas }: DashboardViewProps) {
+  const router = useRouter();
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,6 +32,7 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
       setNewSalaName('');
       setNewSalaDesc('');
       setShowCreateModal(false);
+      router.refresh();
     } catch (err) {
       console.error(err);
     } finally {
@@ -182,7 +185,16 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
 
         {salas.map((sala) => {
           const isFeatured = sala.id === 'cenas-viernes';
-          const roomCalc = calculateRoomBalance(sala, CURRENT_USER_ID);
+          const myMember =
+            sala.members.find(
+              (m) =>
+                m.id === 'm1' ||
+                m.id === 'user-carlos' ||
+                m.name.includes('(Tú)') ||
+                m.name.toLowerCase().includes('carlos')
+            ) || sala.members[0];
+          const targetId = myMember ? myMember.id : CURRENT_USER_ID;
+          const roomCalc = calculateRoomBalance(sala, targetId);
           const net = roomCalc.netBalance;
 
           return (

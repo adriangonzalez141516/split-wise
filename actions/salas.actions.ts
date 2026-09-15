@@ -187,11 +187,31 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
 }
 
 export async function crearSalaAction(name: string, description: string): Promise<Sala> {
-  const localSala = createLocalSala(name, description, CURRENT_USER_ID);
+  const salaSlug =
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '') +
+    '-' +
+    Date.now().toString().slice(-4);
+
+  const creatorMemberId = `user-carlos-${Date.now().toString().slice(-6)}`;
+
+  const localSala = createLocalSala(name, description, creatorMemberId);
+  localSala.id = salaSlug;
+  localSala.members = [
+    {
+      id: creatorMemberId,
+      name: 'Carlos (Tú)',
+      isVirtual: false,
+    },
+  ];
 
   try {
     const supabase = getSupabaseServer();
-    await supabase.from('salas').insert({
+    const { error: salaError } = await supabase.from('salas').insert({
       id: localSala.id,
       name: localSala.name,
       description: localSala.description,
@@ -204,23 +224,28 @@ export async function crearSalaAction(name: string, description: string): Promis
       pass_max_events: localSala.pass.maxEvents,
     });
 
-    if (localSala.members && localSala.members.length > 0) {
-      await supabase.from('sala_members').insert(
-        localSala.members.map((m) => ({
-          id: m.id,
-          sala_id: localSala.id,
-          name: m.name,
-          phone: m.phone || null,
-          avatar_url: m.avatarUrl || null,
-          is_virtual: m.isVirtual,
-        }))
-      );
+    if (salaError) {
+      console.error('[Supabase] Error al crear sala en Supabase:', salaError);
+    }
+
+    const { error: memberError } = await supabase.from('sala_members').insert({
+      id: creatorMemberId,
+      sala_id: localSala.id,
+      name: 'Carlos (Tú)',
+      phone: '+34 600 112 233',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      is_virtual: false,
+    });
+
+    if (memberError) {
+      console.error('[Supabase] Error al insertar creador en sala_members:', memberError);
     }
   } catch (err) {
     console.warn('[Supabase] Fallo al insertar sala en Supabase:', err);
   }
 
   revalidatePath('/');
+  revalidatePath(`/sala/${localSala.id}`);
   return localSala;
 }
 

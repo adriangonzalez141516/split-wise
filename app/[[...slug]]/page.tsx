@@ -45,7 +45,16 @@ export default async function OrchestratorPage({ params }: PageProps) {
     const sala = await getSalaDetailAction(route.salaId);
     if (!sala) return notFound();
 
-    const balance = calculateRoomBalance(sala, CURRENT_USER_ID);
+    const myMember =
+      sala.members.find(
+        (m) =>
+          m.id === 'm1' ||
+          m.id === 'user-carlos' ||
+          m.name.includes('(Tú)') ||
+          m.name.toLowerCase().includes('carlos')
+      ) || sala.members[0];
+    const targetUserId = myMember ? myMember.id : CURRENT_USER_ID;
+    const balance = calculateRoomBalance(sala, targetUserId);
     const allBalances = sala.members.map((m) => {
       const calc = calculateRoomBalance(sala, m.id);
       return {
