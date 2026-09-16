@@ -83,9 +83,9 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Call Gemini
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+    // Call Gemini with multi-model fallback mechanism
+    let response;
+    const aiConfig = {
       contents: [
         "Extrae la información de este ticket de restaurante con máxima precisión. Desglosa todos los platos y bebidas.",
         ...inlineDataImages
@@ -95,7 +95,48 @@ export async function POST(req: NextRequest) {
         responseSchema: ticketSchema,
         temperature: 0.1,
       },
-    });
+    };
+
+    const modelos = [
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-3.6-flash"
+    ];
+
+    let exito = false;
+    for (let i = 0; i < modelos.length; i++) {
+      if (exito) break;
+      
+      const maxRetries = 2;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          response = await ai.models.generateContent({
+            model: modelos[i],
+            ...aiConfig,
+          });
+          exito = true;
+          break; // Éxito: rompe el bucle de reintentos
+        } catch (error: any) {
+          const is503 = error?.status === 503 || error?.message?.includes('503') || error?.message?.includes('high demand') || error?.message?.includes('UNAVAILABLE');
+          
+          if (is503) {
+            if (attempt < maxRetries - 1) {
+              console.warn(`[Aviso] ${modelos[i]} saturado (intento ${attempt + 1}). Esperando 1s para reintentar...`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue; // Reintenta el mismo modelo
+            } else {
+              console.warn(`[Caída] ${modelos[i]} saturado tras ${maxRetries} intentos. Pasando al siguiente modelo...`);
+              break; // Rompe el bucle de intentos, el bucle exterior avanza al siguiente modelo
+            }
+          }
+          throw error; // Si el error no es 503, rompe todo y devuelve el error al frontend
+        }
+      }
+    }
+
+    if (!exito || !response) {
+      throw new Error("Todos los modelos están saturados en este momento. Por favor, inténtalo más tarde.");
+    }
 
     const parsedText = response.text;
     if (!parsedText) {
