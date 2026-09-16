@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { ItemCategory, Member, TicketItem } from '@/lib/types';
 import { anadirPlatoAction, anadirPlatosDesdeTicketAction } from '@/actions/eventos.actions';
@@ -71,6 +71,8 @@ export default function AddPlatoModal({
   const [selectedTicketSample, setSelectedTicketSample] = useState(SAMPLE_TICKETS[0]);
   const [scanStep, setScanStep] = useState<'idle' | 'preprocessing' | 'inferring' | 'done'>('idle');
   const [scannedItems, setScannedItems] = useState<Omit<TicketItem, 'id'>[]>([]);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -127,26 +129,100 @@ export default function AddPlatoModal({
     }
   };
 
-  // Simulate AI Scan pipeline
-  const handleStartAiScan = async () => {
+  // HTML5 Canvas resize to 1400px max, WebP conversion ~250KB
+  const processImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 1400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('Canvas context not available');
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const webpDataUrl = canvas.toDataURL('image/webp', 0.8);
+        resolve(webpDataUrl);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files).slice(0, 3);
+    const processed: string[] = [];
+    
     setScanStep('preprocessing');
-    await new Promise((r) => setTimeout(r, 600));
 
+    for (const file of files) {
+      try {
+        const webp = await processImageFile(file);
+        processed.push(webp);
+      } catch (err) {
+        console.error('Error processing image:', err);
+      }
+    }
+
+    setSelectedImages(processed);
+    setScanStep('idle');
+  };
+
+  const handleStartAiScan = async () => {
+    if (selectedImages.length === 0) return;
     setScanStep('inferring');
-    await new Promise((r) => setTimeout(r, 1200));
+    setIsSubmitting(true);
 
-    // Platos extraídos sin asignar a nadie por defecto: cada comensal se asigna en mesa
-    const extracted: Omit<TicketItem, 'id'>[] = selectedTicketSample.items.map((i) => ({
-      name: i.name,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      total_price: Math.round(i.quantity * i.unit_price * 100) / 100,
-      category: i.category,
-      assignedMemberIds: [],
-    }));
-
-    setScannedItems(extracted);
-    setScanStep('done');
+    try {
+      const res = await fetch('/api/ai/parse-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: selectedImages }),
+      });
+      const data = await res.json();
+      
+      if (data.success && data.data && data.data.items) {
+        const extracted: Omit<TicketItem, 'id'>[] = data.data.items.map((i: any) => ({
+          name: i.name,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          total_price: i.total_price,
+          category: i.category,
+          assignedMemberIds: [],
+        }));
+        setScannedItems(extracted);
+        setScanStep('done');
+      }
+    } catch (err) {
+      console.error(err);
+      setScanStep('idle');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Confirm extracted items into event
@@ -404,82 +480,73 @@ export default function AddPlatoModal({
           </form>
         )}
 
-        {/* ================= TAB 2: AI SCAN SIMULATOR ================= */}
+        {/* ================= TAB 2: AI SCAN ================= */}
         {activeTab === 'ai_scan' && (
           <div className="flex flex-col gap-3.5">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Elige un ticket de muestra o simula la extracción multimodal mediante Gemini 2.5 Flash:
+              Sube la foto de tu ticket para procesarla automáticamente con Gemini 2.5 Flash:
             </p>
 
-            {/* Sample Ticket Presets */}
-            <div className="flex flex-col gap-2">
-              {SAMPLE_TICKETS.map((t) => {
-                const isSelected = selectedTicketSample.id === t.id;
-                const totalSample = t.items.reduce((acc, curr) => acc + curr.unit_price * curr.quantity, 0);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedTicketSample(t);
-                      setScanStep('idle');
-                      setScannedItems([]);
-                    }}
-                    className={`p-3 rounded-2xl text-left border transition-all flex items-center justify-between ${
-                      isSelected
-                        ? 'border-emerald-600 bg-emerald-50/60 ring-1 ring-emerald-500/20'
-                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'
-                    }`}
-                  >
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 font-heading block">{t.title}</span>
-                      <span className="text-[10px] text-slate-500">{t.items.length} platos desglosados</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFilesSelected}
+            />
+
+            {selectedImages.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-8 border-2 border-dashed border-emerald-200/50 hover:border-emerald-500 rounded-2xl flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-emerald-50/50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-3xl text-emerald-600">add_a_photo</span>
+                <span className="text-xs font-semibold text-slate-700">Tomar foto del ticket</span>
+                <span className="text-[11px] text-slate-500">Hasta 3 fotos por ticket</span>
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedImages.map((img, idx) => (
+                    <div key={idx} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt={`Ticket ${idx + 1}`} className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-xs font-black text-emerald-700 tabular-nums font-heading">
-                      +{totalSample.toFixed(2).replace('.', ',')} €
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Animated Laser Scan Box */}
-            <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 p-4 text-center text-white flex flex-col items-center justify-center min-h-[140px]">
-              {scanStep === 'idle' && (
-                <div className="flex flex-col items-center gap-2">
-                  <span className="material-symbols-outlined text-emerald-400 text-3xl">document_scanner</span>
-                  <p className="text-xs font-bold text-slate-200">Ticket listo para digitalizar</p>
-                  <span className="text-[10px] text-slate-400">
-                    Formato WebP 1400px • Esquema estructurado JSON
-                  </span>
+                  ))}
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-emerald-700 font-medium hover:underline text-center"
+                >
+                  Cambiar fotos (hasta 3)
+                </button>
+              </div>
+            )}
 
-              {scanStep === 'preprocessing' && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-3 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-bold text-emerald-300">Comprimiendo en Canvas a WebP (~250KB)...</p>
-                </div>
-              )}
+            {/* Animated Laser Scan Box (Shown during inferring/done) */}
+            {(scanStep === 'inferring' || scanStep === 'done') && (
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 p-4 text-center text-white flex flex-col items-center justify-center min-h-[140px]">
+                {scanStep === 'inferring' && (
+                  <div className="flex flex-col items-center gap-2 relative w-full">
+                    {/* Glowing Laser Scan Beam */}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_#34d399] animate-pulse"></div>
+                    <span className="material-symbols-outlined text-emerald-300 text-3xl animate-bounce">auto_awesome</span>
+                    <p className="text-xs font-bold text-emerald-200">Inferencia Gemini 2.5 Flash...</p>
+                    <span className="text-[10px] text-slate-400">Extrayendo platos y cuadrando el total</span>
+                  </div>
+                )}
 
-              {scanStep === 'inferring' && (
-                <div className="flex flex-col items-center gap-2 relative w-full">
-                  {/* Glowing Laser Scan Beam */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_#34d399] animate-pulse"></div>
-                  <span className="material-symbols-outlined text-emerald-300 text-3xl animate-bounce">auto_awesome</span>
-                  <p className="text-xs font-bold text-emerald-200">Inferencia Gemini 2.5 Flash (1.8s)...</p>
-                  <span className="text-[10px] text-slate-400">Verificando suma cero e integridad</span>
-                </div>
-              )}
-
-              {scanStep === 'done' && (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="material-symbols-outlined text-emerald-400 text-3xl">verified</span>
-                  <p className="text-xs font-black text-emerald-300">¡Ticket Extraído con Éxito!</p>
-                  <span className="text-[10px] text-slate-300">Integridad validada (0,00 € discrepancia)</span>
-                </div>
-              )}
-            </div>
+                {scanStep === 'done' && (
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="material-symbols-outlined text-emerald-400 text-3xl">verified</span>
+                    <p className="text-xs font-black text-emerald-300">¡Ticket Extraído con Éxito!</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Extracted Dishes List Preview */}
             {scannedItems.length > 0 && (
@@ -526,7 +593,7 @@ export default function AddPlatoModal({
               ) : (
                 <button
                   type="button"
-                  disabled={scanStep !== 'idle'}
+                  disabled={scanStep !== 'idle' || selectedImages.length === 0}
                   onClick={handleStartAiScan}
                   className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
                 >
