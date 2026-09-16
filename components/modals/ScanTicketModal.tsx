@@ -126,7 +126,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
       const res = await fetch('/api/ai/parse-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imagesCount: selectedImages.length }),
+        body: JSON.stringify({ images: selectedImages }),
       });
       const data = await res.json();
       if (data.success) {

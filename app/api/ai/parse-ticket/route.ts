@@ -1,12 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { StructuredTicketOutput } from '@/lib/types';
+import { GoogleGenAI, Type, Schema } from '@google/genai';
 
-/**
- * POST /api/ai/parse-ticket
- * Receives WebP compressed ticket image (or base64/form data)
- * Uses Gemini multimodal inference or fallback parser
- * Returns structured ticket validated against JSON Schema and sum integrity rule.
- */
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const ticketSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    establishment: {
+      type: Type.STRING,
+      description: "Name of the restaurant or establishment",
+    },
+    date: {
+      type: Type.STRING,
+      description: "Date of the ticket in YYYY-MM-DD format",
+    },
+    currency: {
+      type: Type.STRING,
+      description: "Currency of the ticket, e.g., EUR, USD",
+    },
+    items: {
+      type: Type.ARRAY,
+      description: "List of items consumed",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING, description: "A unique random string ID for this item" },
+          name: { type: Type.STRING, description: "Name of the dish or drink" },
+          quantity: { type: Type.NUMBER, description: "Number of units ordered" },
+          unit_price: { type: Type.NUMBER, description: "Price per unit" },
+          total_price: { type: Type.NUMBER, description: "Total price for the quantity" },
+          category: {
+            type: Type.STRING,
+            enum: ['food', 'standard_drink', 'alcohol', 'dessert', 'service'],
+            description: "Category of the item",
+          },
+        },
+        required: ["id", "name", "quantity", "unit_price", "total_price", "category"],
+      },
+    },
+    global_modifiers: {
+      type: Type.OBJECT,
+      properties: {
+        tax_amount: { type: Type.NUMBER, description: "Total taxes" },
+        service_charge: { type: Type.NUMBER, description: "Service charges if any" },
+        discount_amount: { type: Type.NUMBER, description: "Discounts applied" },
+        tip_amount: { type: Type.NUMBER, description: "Tip amount left" },
+      },
+      description: "Global amounts added or subtracted to the ticket items",
+    },
+    total_amount: { type: Type.NUMBER, description: "Total amount stated in the ticket" },
+  },
+  required: ["establishment", "date", "currency", "items", "global_modifiers", "total_amount"],
+};
+
 export async function POST(req: NextRequest) {
   try {
     let body: any = {};
@@ -14,68 +60,52 @@ export async function POST(req: NextRequest) {
 
     if (contentType.includes('application/json')) {
       body = await req.json();
-    } else if (contentType.includes('multipart/form-data')) {
-      const formData = await req.formData();
-      const file = formData.get('image') as File | null;
-      body = { fileName: file?.name, fileSize: file?.size };
+    } else {
+      return NextResponse.json({ success: false, error: 'Expected JSON with base64 images' }, { status: 400 });
     }
 
-    // Default parsed sample response adhering strictly to the JSON schema
-    const parsedTicket: StructuredTicketOutput = {
-      establishment: body?.establishment || 'Taberna Los Ilustres',
-      date: new Date().toISOString().split('T')[0],
-      currency: 'EUR',
-      items: [
-        {
-          id: `ai-${Date.now()}-1`,
-          name: 'Croquetas de Jamón Ibérico',
-          quantity: 2,
-          unit_price: 9.5,
-          total_price: 19.0,
-          category: 'food',
+    const images = body.images as string[];
+    if (!images || images.length === 0) {
+      return NextResponse.json({ success: false, error: 'No images provided' }, { status: 400 });
+    }
+
+    // Convert WebP base64 data to GenAI inlineData format
+    const inlineDataImages = images.map((base64Str) => {
+      // The format from canvas is data:image/webp;base64,....
+      const parts = base64Str.split(',');
+      const mimeType = parts[0].match(/:(.*?);/)?.[1] || 'image/webp';
+      const data = parts[1];
+      return {
+        inlineData: {
+          data,
+          mimeType,
         },
-        {
-          id: `ai-${Date.now()}-2`,
-          name: 'Pulpo a la Gallega',
-          quantity: 1,
-          unit_price: 24.5,
-          total_price: 24.5,
-          category: 'food',
-        },
-        {
-          id: `ai-${Date.now()}-3`,
-          name: 'Chuletón de Vaca 1kg',
-          quantity: 1,
-          unit_price: 68.0,
-          total_price: 68.0,
-          category: 'food',
-        },
-        {
-          id: `ai-${Date.now()}-4`,
-          name: 'Ribera del Duero (x2)',
-          quantity: 2,
-          unit_price: 18.0,
-          total_price: 36.0,
-          category: 'alcohol',
-        },
-        {
-          id: `ai-${Date.now()}-5`,
-          name: 'Tarta Queso Idiazábal',
-          quantity: 1,
-          unit_price: 17.0,
-          total_price: 17.0,
-          category: 'dessert',
-        },
+      };
+    });
+
+    // Call Gemini
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        "Extrae la información de este ticket de restaurante con máxima precisión. Desglosa todos los platos y bebidas.",
+        ...inlineDataImages
       ],
-      global_modifiers: {
-        service_charge: 14.0,
-        tax_amount: 6.0,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: ticketSchema,
+        temperature: 0.1,
       },
-      total_amount: 184.5,
-    };
+    });
+
+    const parsedText = response.text;
+    if (!parsedText) {
+      throw new Error("No text returned by the model");
+    }
+
+    const parsedTicket = JSON.parse(parsedText);
 
     // Calculate sum of item totals + global modifiers
-    const sumItems = parsedTicket.items.reduce((acc, item) => acc + item.total_price, 0);
+    const sumItems = parsedTicket.items.reduce((acc: number, item: any) => acc + item.total_price, 0);
     const sumModifiers =
       (parsedTicket.global_modifiers.tax_amount || 0) +
       (parsedTicket.global_modifiers.service_charge || 0) +
@@ -98,6 +128,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
+    console.error('Error in parse-ticket:', error);
     return NextResponse.json(
       { success: false, error: error?.message || 'Error al procesar el ticket con IA' },
       { status: 500 }
