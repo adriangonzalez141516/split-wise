@@ -98,9 +98,8 @@ export async function POST(req: NextRequest) {
     };
 
     const modelos = [
-      "gemini-3.8-flash",
-      "gemini-3.7-flash",
-      "gemini-3.6-flash"
+      "gemini-3.6-flash",
+      "gemini-3.5-flash"
     ];
 
     let exito = false;
