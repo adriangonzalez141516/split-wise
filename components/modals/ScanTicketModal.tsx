@@ -154,7 +154,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
             </div>
             <div>
               <h3 className="text-base font-bold text-on-surface">Escanear Ticket con IA</h3>
-              <p className="text-xs text-outline">Hasta 3 fotos consecutivas (Gemini 2.5 Flash)</p>
+              <p className="text-xs text-outline">Hasta 3 fotos consecutivas</p>
             </div>
           </div>
           <button

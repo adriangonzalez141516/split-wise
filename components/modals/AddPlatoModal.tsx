@@ -484,7 +484,7 @@ export default function AddPlatoModal({
         {activeTab === 'ai_scan' && (
           <div className="flex flex-col gap-3.5">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Sube la foto de tu ticket para procesarla automáticamente con Gemini 2.5 Flash:
+              Sube la foto de tu ticket para procesarla automáticamente con IA:
             </p>
 
             <input
@@ -535,7 +535,7 @@ export default function AddPlatoModal({
                     {/* Glowing Laser Scan Beam */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_#34d399] animate-pulse"></div>
                     <span className="material-symbols-outlined text-emerald-300 text-3xl animate-bounce">auto_awesome</span>
-                    <p className="text-xs font-bold text-emerald-200">Inferencia Gemini 2.5 Flash...</p>
+                    <p className="text-xs font-bold text-emerald-200">Procesando ticket con IA...</p>
                     <span className="text-[10px] text-slate-400">Extrayendo platos y cuadrando el total</span>
                   </div>
                 )}
