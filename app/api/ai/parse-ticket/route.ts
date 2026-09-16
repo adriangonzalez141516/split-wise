@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     // Call Gemini
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: [
         "Extrae la información de este ticket de restaurante con máxima precisión. Desglosa todos los platos y bebidas.",
         ...inlineDataImages
