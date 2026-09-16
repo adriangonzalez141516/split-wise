@@ -185,6 +185,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           multiple
           className="hidden"
           onChange={handleFilesSelected}
