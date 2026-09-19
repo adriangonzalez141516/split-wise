@@ -28,6 +28,7 @@ export default function AppLayout({
           {/* Salas */}
           <Link
             href="/"
+            prefetch={true}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs transition-all active:scale-95 ${
               isSalasActive
                 ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold shadow-xs'
@@ -46,6 +47,7 @@ export default function AppLayout({
           {/* Actividad */}
           <Link
             href="/actividad"
+            prefetch={true}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs transition-all active:scale-95 ${
               isActividadActive
                 ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold shadow-xs'
@@ -64,6 +66,7 @@ export default function AppLayout({
           {/* Perfil */}
           <Link
             href="/perfil"
+            prefetch={true}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs transition-all active:scale-95 ${
               isPerfilActive
                 ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-bold shadow-xs'

@@ -29,7 +29,7 @@ export async function getSalasAction(): Promise<Sala[]> {
           liquidaciones(*)
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('last_activity_at', { ascending: false, nullsFirst: false });
 
     if (!error && salasData && salasData.length > 0) {
       return salasData.map((s) => ({
@@ -56,8 +56,8 @@ export async function getSalasAction(): Promise<Sala[]> {
         eventos: (s.eventos || [])
           .sort(
             (a: Record<string, unknown>, b: Record<string, unknown>) =>
-              new Date(String(b.created_at || b.date || 0)).getTime() -
-              new Date(String(a.created_at || a.date || 0)).getTime()
+              new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
+              new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
           )
           .map((e: Record<string, unknown>) => ({
           id: String(e.id),
@@ -149,8 +149,8 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
         eventos: (s.eventos || [])
           .sort(
             (a: Record<string, unknown>, b: Record<string, unknown>) =>
-              new Date(String(b.created_at || b.date || 0)).getTime() -
-              new Date(String(a.created_at || a.date || 0)).getTime()
+              new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
+              new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
           )
           .map((e: Record<string, unknown>) => ({
           id: String(e.id),

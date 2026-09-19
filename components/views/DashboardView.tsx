@@ -186,7 +186,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{salas.length} en total</span>
         </div>
 
-        {salas.map((sala) => {
+        {salas.map((sala, idx) => {
           const isFeatured = sala.id === 'cenas-viernes';
           const myMember =
             sala.members.find(
@@ -217,7 +217,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                       </span>
                     </div>
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight font-heading truncate">
-                      <Link href={`/sala/${sala.id}`} className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                      <Link prefetch={idx === 0 ? true : undefined} href={`/sala/${sala.id}`} className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                         {sala.name}
                       </Link>
                     </h3>
@@ -278,6 +278,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
 
                 <Link
                   href={`/sala/${sala.id}`}
+                  prefetch={idx === 0 ? true : undefined}
                   className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs flex items-center gap-1"
                 >
                   <span>Ver sala</span>

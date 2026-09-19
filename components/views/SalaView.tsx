@@ -190,7 +190,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
 
         {sala.eventos && sala.eventos.length > 0 ? (
           <div className="flex flex-col gap-2.5">
-            {sala.eventos.map((ev) => {
+            {sala.eventos.map((ev, idx) => {
               const isEnCurso = ev.status === 'en_curso';
               const payer = sala.members.find((m) => m.id === ev.originalPayerId);
 
@@ -198,6 +198,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
                 <Link
                   key={ev.id}
                   href={`/sala/${sala.id}/evento/${ev.id}`}
+                  prefetch={idx === 0 ? true : undefined}
                   className="p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-center justify-between gap-3 group active:scale-[0.99] shadow-2xs"
                 >
                   <div className="flex items-center gap-3 min-w-0">
