@@ -57,10 +57,10 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
             <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
           </div>
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none">
               Hola, {wallet.userName}
             </span>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight font-heading mt-0.5">
+            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight font-heading mt-0.5">
               Salas &amp; Grupos
             </h1>
           </div>
@@ -120,37 +120,37 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <div className="flex items-baseline gap-2">
             <span className={`text-4xl font-black tracking-tight tabular-nums font-heading ${
               wallet.netBalanceTotal > 0
-                ? 'text-emerald-600'
+                ? 'text-emerald-600 dark:text-emerald-400'
                 : wallet.netBalanceTotal < 0
-                ? 'text-amber-700'
-                : 'text-slate-800'
+                ? 'text-amber-700 dark:text-amber-500'
+                : 'text-slate-800 dark:text-slate-100'
             }`}>
               {wallet.netBalanceTotal > 0
                 ? `+${wallet.netBalanceTotal.toFixed(2).replace('.', ',')} €`
                 : `${wallet.netBalanceTotal.toFixed(2).replace('.', ',')} €`}
             </span>
-            <span className="text-xs text-slate-500 font-semibold">acumulado</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">acumulado</span>
           </div>
         </div>
 
         {/* Floating Metrics Tiles (Te deben / Debes) */}
         <div className="grid grid-cols-2 gap-3 pt-1">
-          <div className="bg-emerald-50/60 rounded-2xl p-3.5 border border-emerald-200/60 flex flex-col">
-            <div className="flex items-center gap-1.5 text-emerald-800 text-[11px] font-bold uppercase tracking-wider">
+          <div className="bg-emerald-50/60 dark:bg-emerald-900/20 rounded-2xl p-3.5 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col">
+            <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
               <span className="material-symbols-outlined text-sm">arrow_downward</span>
               <span>Te deben</span>
             </div>
-            <span className="text-xl font-black text-emerald-700 tabular-nums font-heading mt-1">
+            <span className="text-xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums font-heading mt-1">
               {wallet.totalPorCobrar.toFixed(2).replace('.', ',')} €
             </span>
           </div>
 
-          <div className="bg-amber-50/60 rounded-2xl p-3.5 border border-amber-200/60 flex flex-col">
-            <div className="flex items-center gap-1.5 text-amber-800 text-[11px] font-bold uppercase tracking-wider">
+          <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-2xl p-3.5 border border-amber-200/60 dark:border-amber-800/40 flex flex-col">
+            <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-400 text-[11px] font-bold uppercase tracking-wider">
               <span className="material-symbols-outlined text-sm">arrow_upward</span>
               <span>Debes</span>
             </div>
-            <span className="text-xl font-black text-amber-700 tabular-nums font-heading mt-1">
+            <span className="text-xl font-black text-amber-700 dark:text-amber-300 tabular-nums font-heading mt-1">
               {wallet.totalPorPagar.toFixed(2).replace('.', ',')} €
             </span>
           </div>
@@ -161,7 +161,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="py-3 px-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-2 active:scale-98 transition-all shadow-sm"
+            className="py-3 px-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 active:scale-98 transition-all shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">add_circle</span>
             <span>Nueva Sala</span>
@@ -169,9 +169,9 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <button
             type="button"
             onClick={() => setShowQrModal(true)}
-            className="py-3 px-4 rounded-2xl bg-slate-50 border border-slate-200/90 hover:bg-slate-100 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-98 transition-all shadow-2xs"
+            className="py-3 px-4 rounded-2xl bg-slate-50 border border-slate-200/90 hover:bg-slate-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-98 transition-all shadow-2xs"
           >
-            <span className="material-symbols-outlined text-[18px] text-emerald-700">group_add</span>
+            <span className="material-symbols-outlined text-[18px] text-emerald-700 dark:text-emerald-400">group_add</span>
             <span>Unirme</span>
           </button>
         </div>
@@ -180,10 +180,10 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
       {/* 2. Salas / Grupos List */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-sm font-extrabold text-slate-900 font-heading uppercase tracking-wider">
+          <h2 className="text-sm font-extrabold text-slate-900 dark:text-white font-heading uppercase tracking-wider">
             Tus Salas Activas
           </h2>
-          <span className="text-xs text-slate-500 font-medium">{salas.length} en total</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{salas.length} en total</span>
         </div>
 
         {salas.map((sala) => {
@@ -211,26 +211,26 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 text-emerald-800 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-800 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[18px]">
                         {sala.icon || 'groups'}
                       </span>
                     </div>
-                    <h3 className="text-base font-extrabold text-slate-900 tracking-tight font-heading truncate">
-                      <Link href={`/sala/${sala.id}`} className="hover:text-emerald-700 transition-colors">
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight font-heading truncate">
+                      <Link href={`/sala/${sala.id}`} className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                         {sala.name}
                       </Link>
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-1 truncate">{sala.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 truncate">{sala.description}</p>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none">
                     Tu balance
                   </span>
                   <span className={`text-lg font-black tabular-nums font-heading mt-0.5 block ${
-                    net > 0 ? 'text-emerald-600' : net < 0 ? 'text-amber-600' : 'text-slate-400'
+                    net > 0 ? 'text-emerald-600 dark:text-emerald-400' : net < 0 ? 'text-amber-600 dark:text-amber-500' : 'text-slate-400 dark:text-slate-500'
                   }`}>
                     {net > 0 ? `+${net.toFixed(2).replace('.', ',')} €` : `${net.toFixed(2).replace('.', ',')} €`}
                   </span>
@@ -238,7 +238,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
               </div>
 
               {/* Members Facepile & CTA Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/50">
                 <div className="flex items-center">
                   <div className="flex -space-x-2 overflow-hidden items-center">
                     {sala.members.slice(0, 5).map((m, idx) => {
@@ -246,7 +246,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                         return (
                           <div
                             key={m.id}
-                            className="inline-block h-7 w-7 rounded-full ring-2 ring-white overflow-hidden shadow-2xs"
+                            className="inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-slate-800 overflow-hidden shadow-2xs"
                             title={m.name}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -257,12 +257,12 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                       return (
                         <div
                           key={m.id}
-                          className={`inline-block h-7 w-7 rounded-full ring-2 ring-white flex items-center justify-center text-[10px] font-bold shadow-2xs ${
+                          className={`inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-slate-800 flex items-center justify-center text-[10px] font-bold shadow-2xs ${
                             m.isVirtual
-                              ? 'border border-dashed border-amber-300 bg-amber-50 text-amber-800'
+                              ? 'border border-dashed border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400'
                               : idx % 2 === 0
-                              ? 'bg-emerald-100 text-emerald-900'
-                              : 'bg-slate-200 text-slate-800'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-300'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300'
                           }`}
                           title={m.isVirtual ? `${m.name} (Invitada virtual)` : m.name}
                         >
@@ -271,14 +271,14 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                       );
                     })}
                   </div>
-                  <span className="text-xs text-slate-500 font-semibold ml-2.5">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold ml-2.5">
                     {sala.members.length} miembros
                   </span>
                 </div>
 
                 <Link
                   href={`/sala/${sala.id}`}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs flex items-center gap-1"
                 >
                   <span>Ver sala</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -299,53 +299,53 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
       {/* Modal Nueva Sala */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-extrabold text-slate-900 font-heading">Crear Nueva Sala</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">Crear Nueva Sala</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Contenedor permanente para gastos de ocio, piso compartido o viajes.
             </p>
             <form onSubmit={handleCreateSala} className="flex flex-col gap-3 mt-1">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Nombre de la sala</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Nombre de la sala</label>
                 <input
                   type="text"
                   required
                   placeholder="ej. Cenas de los Viernes, Piso Compartido"
                   value={newSalaName}
                   onChange={(e) => setNewSalaName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-emerald-600 bg-slate-50 focus:bg-white transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-emerald-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-colors"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Descripción</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Descripción</label>
                 <input
                   type="text"
                   placeholder="ej. Gastos de comida y compras grupales"
                   value={newSalaDesc}
                   onChange={(e) => setNewSalaDesc(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-emerald-600 bg-slate-50 focus:bg-white transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-emerald-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-colors"
                 />
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors shadow-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 dark:bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-800 dark:hover:bg-emerald-500 transition-colors shadow-xs"
                 >
                   {isCreating ? 'Creando...' : 'Crear Sala'}
                 </button>

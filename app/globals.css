@@ -26,8 +26,6 @@
   }
 
   html, body {
-    background-color: #f8fafc;
-    color: #0f172a;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -71,6 +69,12 @@
   border-radius: 1.25rem;
 }
 
+:is(.dark .fintech-card) {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+}
+
 .fintech-card-featured {
   background: #ffffff;
   border: 1.5px solid rgba(5, 150, 105, 0.35);
@@ -78,10 +82,20 @@
   border-radius: 1.25rem;
 }
 
+:is(.dark .fintech-card-featured) {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 10px 30px -4px rgba(16, 185, 129, 0.15);
+}
+
 .fintech-header {
   background: rgba(248, 250, 252, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+:is(.dark .fintech-header) {
+  background: rgba(2, 6, 23, 0.88);
 }
 
 .fintech-pill {
