@@ -78,6 +78,9 @@ export async function signInAction(data: { email: string; password: string }) {
     });
 
     if (authError) {
+      if (authError.message === 'Invalid login credentials') {
+        throw new Error('Credenciales incorrectas');
+      }
       throw new Error(authError.message);
     }
 
