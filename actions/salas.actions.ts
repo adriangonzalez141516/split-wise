@@ -14,7 +14,7 @@ import { getCurrentUserAction } from '@/actions/user.actions';
 
 export async function getSalasAction(): Promise<Sala[]> {
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { data: salasData, error } = await supabase
       .from('salas')
       .select(`
@@ -106,7 +106,7 @@ export async function getSalasAction(): Promise<Sala[]> {
 
 export async function getSalaDetailAction(salaId: string): Promise<Sala | null> {
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { data: s, error } = await supabase
       .from('salas')
       .select(`
@@ -227,7 +227,7 @@ export async function crearSalaAction(name: string, description: string): Promis
   ];
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { error: salaError } = await supabase.from('salas').insert({
       id: localSala.id,
       name: localSala.name,
@@ -282,7 +282,7 @@ export async function anadirMiembroVirtualAction(salaId: string, name: string): 
   };
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { error } = await supabase.from('sala_members').insert({
       id: newMember.id,
       sala_id: salaId,
@@ -318,7 +318,7 @@ export async function reclamarCuentaVirtualAction(
 
   if (success) {
     try {
-      const supabase = getSupabaseServer();
+      const supabase = await getSupabaseServer();
       await supabase
         .from('sala_members')
         .update({
@@ -363,7 +363,7 @@ export async function comprarPaseSalaAction(
   };
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     await supabase
       .from('salas')
       .update({

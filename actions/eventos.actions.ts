@@ -19,7 +19,7 @@ import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flo
 
 export async function getEventoDetailAction(salaId: string, eventoId: string): Promise<Evento | null> {
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { data: e, error } = await supabase
       .from('eventos')
       .select(`
@@ -93,7 +93,7 @@ export async function toggleItemClaimAction(
   let isAssignedNow = false;
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
 
     // Resolver memberId válido para esta sala (defensa ante fallbacks)
     let memberInSalaId = effectiveMemberId;
@@ -252,7 +252,7 @@ export async function consolidarEventoAction(
   evento.suggestedPayerId = identifySuggestedPayer(balances);
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     await supabase.from('eventos').update({ status: 'cerrado' }).eq('id', eventoId);
 
     if (optimizedTx.length > 0) {
@@ -304,7 +304,7 @@ export async function anadirPlatoAction(
   };
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { error: itemError } = await supabase.from('ticket_items').insert({
       id: newItem.id,
       evento_id: eventoId,
@@ -375,7 +375,7 @@ export async function anadirPlatosDesdeTicketAction(
   const createdItems: TicketItem[] = [];
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
 
     const { data: validMembers } = await supabase
       .from('sala_members')
@@ -489,7 +489,7 @@ export async function crearEventoAction(
   };
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { error } = await supabase.from('eventos').insert({
       id: newEvento.id,
       sala_id: salaId,

@@ -40,7 +40,7 @@ export async function actualizarEstadoBizumAction(
   const success = updateTransactionStatus(salaId, eventoId, txId, newStatus);
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     await supabase
       .from('liquidaciones')
       .update({
@@ -73,7 +73,7 @@ export async function ejecutarMinCashFlowSalaAction(
   const transactions = calculateMinCashFlow(balances);
 
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     if (transactions.length > 0) {
       await supabase.from('liquidaciones').upsert(
         transactions.map((tx) => ({

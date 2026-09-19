@@ -13,7 +13,7 @@ export interface UserProfile {
 
 export async function getCurrentUserAction(): Promise<UserProfile | null> {
   try {
-    const supabase = getSupabaseServer();
+    const supabase = await getSupabaseServer();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
