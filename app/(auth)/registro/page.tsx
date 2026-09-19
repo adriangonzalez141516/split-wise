@@ -60,44 +60,44 @@ function RegistroForm() {
 
   return (
     <div className="max-w-[440px] w-full relative z-10 mx-auto">
-      <div className="bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-10 border border-white/10 shadow-2xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-10 border border-slate-200 dark:border-white/10 shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden transition-colors duration-500">
         {/* Edge Highlights */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-500/50 dark:via-emerald-400/50 to-transparent"></div>
 
         <div className="flex flex-col items-center text-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight font-heading mb-1">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight font-heading mb-1 transition-colors">
               Únete a Stitch
             </h1>
-            <p className="text-sm text-slate-400 font-medium">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">
               Tu monedero social, sin comisiones.
             </p>
           </div>
         </div>
 
         {claimToken && (
-          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col gap-2 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
+          <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex flex-col gap-2 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400 text-sm">
               <span className="material-symbols-outlined text-lg">stars</span>
               <span>¡Invitación de Mesa Detectada!</span>
             </div>
-            <p className="text-emerald-200/70 text-xs leading-relaxed">
+            <p className="text-emerald-700 dark:text-emerald-200/70 text-xs leading-relaxed">
               Tu cuenta heredará automáticamente el historial de consumos y el balance neto acumulado de tu perfil de comensal virtual.
             </p>
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined text-emerald-400 text-lg shrink-0">check_circle</span>
-            <p className="text-emerald-200 text-sm font-medium leading-tight">{successMessage}</p>
+          <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-lg shrink-0">check_circle</span>
+            <p className="text-emerald-700 dark:text-emerald-200 text-sm font-medium leading-tight">{successMessage}</p>
           </div>
         )}
 
         {errorMessage && (
-          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined text-rose-400 text-lg shrink-0">error</span>
-            <p className="text-rose-200 text-sm font-medium leading-tight">{errorMessage}</p>
+          <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+            <span className="material-symbols-outlined text-rose-500 dark:text-rose-400 text-lg shrink-0">error</span>
+            <p className="text-rose-700 dark:text-rose-200 text-sm font-medium leading-tight">{errorMessage}</p>
           </div>
         )}
 
@@ -106,7 +106,7 @@ function RegistroForm() {
           {/* Fila Doble: Nombre y Nick */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider ml-1">Nombre</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider ml-1 transition-colors">Nombre</label>
               <div className="relative">
                 <input
                   type="text"
@@ -114,12 +114,12 @@ function RegistroForm() {
                   placeholder="Carlos"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-none bg-white/5 text-sm text-white placeholder-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider ml-1">Alias (Nick)</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider ml-1 transition-colors">Alias (Nick)</label>
               <div className="relative">
                 <input
                   type="text"
@@ -127,16 +127,16 @@ function RegistroForm() {
                   placeholder="Charly"
                   value={nick}
                   onChange={(e) => setNick(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-none bg-white/5 text-sm text-white placeholder-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider ml-1">Móvil (Para Bizum)</label>
+            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider ml-1 transition-colors">Móvil (Para Bizum)</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <span className="material-symbols-outlined text-[17px]">smartphone</span>
               </div>
               <input
@@ -144,15 +144,15 @@ function RegistroForm() {
                 placeholder="600 000 000 (Opcional)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-2xl border-none bg-white/5 text-sm text-white placeholder-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider ml-1">Email</label>
+            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider ml-1 transition-colors">Email</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <span className="material-symbols-outlined text-[17px]">mail</span>
               </div>
               <input
@@ -161,15 +161,15 @@ function RegistroForm() {
                 placeholder="hola@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-2xl border-none bg-white/5 text-sm text-white placeholder-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider ml-1">Contraseña</label>
+            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider ml-1 transition-colors">Contraseña</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <span className="material-symbols-outlined text-[17px]">lock</span>
               </div>
               <input
@@ -178,7 +178,7 @@ function RegistroForm() {
                 placeholder="Mínimo 8 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-2xl border-none bg-white/5 text-sm text-white placeholder-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
               />
             </div>
           </div>
@@ -186,7 +186,7 @@ function RegistroForm() {
           <button
             type="submit"
             disabled={loading}
-            className="relative overflow-hidden w-full mt-3 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 group"
+            className="relative overflow-hidden w-full mt-3 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-600 text-white font-bold text-sm shadow-[0_4px_20px_rgba(16,185,129,0.2)] dark:shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_25px_rgba(16,185,129,0.3)] dark:hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 group"
           >
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
             <span className="relative flex items-center justify-center gap-2">
@@ -206,9 +206,9 @@ function RegistroForm() {
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">
             ¿Ya tienes una cuenta?{' '}
-            <Link href="/login" className="font-bold text-white hover:text-emerald-400 transition-colors underline decoration-emerald-500/30 hover:decoration-emerald-400 underline-offset-4">
+            <Link href="/login" className="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline decoration-emerald-500/30 hover:decoration-emerald-500/80 dark:hover:decoration-emerald-400 underline-offset-4">
               Inicia sesión
             </Link>
           </p>
@@ -220,15 +220,15 @@ function RegistroForm() {
 
 export default function RegistroPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 relative overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
       {/* Dynamic Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-[30%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-emerald-600/20 blur-[100px] animate-pulse"></div>
-        <div className="absolute -bottom-[20%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-teal-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-[40%] right-[20%] w-[40vw] h-[40vw] rounded-full bg-emerald-400/10 blur-[80px] animate-pulse" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute -top-[30%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-emerald-400/20 dark:bg-emerald-600/20 blur-[100px] animate-pulse"></div>
+        <div className="absolute -bottom-[20%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-teal-400/20 dark:bg-teal-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[40%] right-[20%] w-[40vw] h-[40vw] rounded-full bg-emerald-200/40 dark:bg-emerald-400/10 blur-[80px] animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <Suspense fallback={<div className="text-sm text-slate-400 font-medium z-10 relative">Cargando...</div>}>
+      <Suspense fallback={<div className="text-sm text-slate-500 dark:text-slate-400 font-medium z-10 relative">Cargando...</div>}>
         <RegistroForm />
       </Suspense>
     </div>

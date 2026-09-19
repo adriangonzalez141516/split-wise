@@ -8,6 +8,7 @@ import { calculateRoomBalance, CURRENT_USER_ID } from '@/lib/store';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import { crearSalaAction } from '@/actions/salas.actions';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface DashboardViewProps {
   wallet: UserGlobalWallet;
@@ -66,11 +67,12 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => setShowMonetizationModal(true)}
             aria-label="Pases de Sala"
-            className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white border border-slate-200/80 text-emerald-700 hover:bg-emerald-50/60 active:scale-95 transition-all shadow-xs"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/60 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-xs"
             title="Pase Súper-Anfitrión"
           >
             <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
@@ -79,7 +81,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
             type="button"
             onClick={() => setShowQrModal(true)}
             aria-label="Escanear QR o unirse a sala"
-            className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all shadow-xs"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-xs"
             title="Unirse vía QR"
           >
             <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
