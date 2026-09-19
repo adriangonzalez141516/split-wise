@@ -39,7 +39,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
   // 1. Dashboard View (/)
   if (route.type === 'dashboard') {
     const [wallet, salas] = await Promise.all([
-      getMonederoGlobalAction(currentUser.id, salas => salas), // We need to update this function later
+      getMonederoGlobalAction(currentUser.id), // Removed salas => salas
       getSalasAction(),
     ]);
 
@@ -65,7 +65,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
         memberId: m.id,
         name: m.name,
         phone: m.phone,
-        isVirtual: m.isVirtual,
+        isVirtual: m.isVirtual ?? false,
         netBalance: calc.netBalance,
       };
     });
@@ -90,7 +90,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
 
   // 4. Actividad View (/actividad)
   if (route.type === 'actividad') {
-    const wallet = await getMonederoGlobalAction(currentUser.id, salas => salas);
+    const wallet = await getMonederoGlobalAction(currentUser.id);
     return (
       <div className="w-full max-w-md mx-auto px-4 pb-28 pt-4 flex flex-col gap-4">
         <header className="py-2 flex items-center justify-between">
@@ -118,7 +118,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
 
   // 5. Perfil View (/perfil)
   if (route.type === 'perfil') {
-    const wallet = await getMonederoGlobalAction(currentUser.id, salas => salas);
+    const wallet = await getMonederoGlobalAction(currentUser.id);
     return (
       <div className="w-full max-w-md mx-auto px-4 pb-28 pt-4 flex flex-col gap-4">
         <header className="py-2 flex items-center justify-between">

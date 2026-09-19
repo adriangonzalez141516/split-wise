@@ -9,8 +9,8 @@ import {
   toggleItemClaim as toggleLocalClaim,
   excludeAlcoholForMember as excludeLocalAlcohol,
   updateTransactionStatus as updateLocalTx,
-  addItemToEvento as addLocalItem,
-  addMultipleItemsToEvento as addMultipleLocalItems,
+  addItemToEvento as addLocalItemToEvento,
+  addMultipleItemsToEvento as addLocalMultipleItemsToEvento,
   createEvento as createLocalEvento,
 } from '@/lib/store';
 import { Evento, TicketItem } from '@/lib/types';
