@@ -2,12 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServer } from '@/lib/supabase/server';
-import {
-  calculateUserGlobalWallet,
-  calculateRoomBalance,
-  getSalaById,
-  updateTransactionStatus,
-} from '@/lib/store';
+import { calculateUserGlobalWallet, calculateRoomBalance } from '@/lib/store';
 import { getCurrentUserAction } from '@/actions/user.actions';
 import { UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction } from '@/lib/types';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
@@ -25,10 +20,10 @@ export async function getMonederoGlobalAction(userId?: string): Promise<UserGlob
 }
 
 export async function getBalancesSalaAction(salaId: string): Promise<RoomBalanceCalculation[]> {
-  const sala = getSalaById(salaId);
+  const sala = await getSalaDetailAction(salaId);
   if (!sala) return [];
 
-  return sala.members.map((m) => calculateRoomBalance(salaId, m.id));
+  return sala.members.map((m) => calculateRoomBalance(sala, m.id));
 }
 
 export async function actualizarEstadoBizumAction(
@@ -37,59 +32,59 @@ export async function actualizarEstadoBizumAction(
   txId: string,
   newStatus: 'propuesta' | 'pendiente' | 'consolidado'
 ): Promise<{ success: boolean; newStatus: string }> {
-  const success = updateTransactionStatus(salaId, eventoId, txId, newStatus);
+  const supabase = await getSupabaseServer();
+  const { error } = await supabase
+    .from('liquidaciones')
+    .update({
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', txId);
 
-  try {
-    const supabase = await getSupabaseServer();
-    await supabase
-      .from('liquidaciones')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', txId);
-  } catch (err) {
-    console.warn('[Supabase] Fallo al actualizar liquidación en Supabase:', err);
+  if (error) {
+    console.error('[Supabase] Error actualizando liquidacion:', error);
+    throw new Error('Fallo al actualizar el estado de la liquidación en el servidor');
   }
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
   revalidatePath('/');
-  return { success, newStatus };
+  return { success: true, newStatus };
 }
 
 export async function ejecutarMinCashFlowSalaAction(
   salaId: string
 ): Promise<{ transactions: LiquidacionTransaction[]; suggestedPayerId?: string }> {
-  const sala = getSalaById(salaId);
+  const sala = await getSalaDetailAction(salaId);
   if (!sala) return { transactions: [] };
 
   const balances = sala.members.map((m) => {
-    const calc = calculateRoomBalance(salaId, m.id);
+    const calc = calculateRoomBalance(sala, m.id);
     return { memberId: m.id, netBalance: calc.netBalance };
   });
 
   const suggestedPayerId = identifySuggestedPayer(balances);
   const transactions = calculateMinCashFlow(balances);
 
-  try {
+  if (transactions.length > 0) {
     const supabase = await getSupabaseServer();
-    if (transactions.length > 0) {
-      await supabase.from('liquidaciones').upsert(
-        transactions.map((tx) => ({
-          id: tx.id,
-          sala_id: salaId,
-          from_member_id: tx.fromMemberId,
-          to_member_id: tx.toMemberId,
-          amount: tx.amount,
-          status: tx.status,
-          rule_applied: tx.ruleApplied,
-          note: tx.note || null,
-        }))
-      );
+    const { error } = await supabase.from('liquidaciones').upsert(
+      transactions.map((tx) => ({
+        id: tx.id,
+        sala_id: salaId,
+        from_member_id: tx.fromMemberId,
+        to_member_id: tx.toMemberId,
+        amount: tx.amount,
+        status: tx.status,
+        rule_applied: tx.ruleApplied,
+        note: tx.note || null,
+      }))
+    );
+
+    if (error) {
+      console.error('[Supabase] Error guardando transacciones de Min-Cash-Flow:', error);
+      throw new Error('No se pudo guardar la propuesta de liquidación');
     }
-  } catch (err) {
-    console.warn('[Supabase] Fallo al guardar transacciones de Min-Cash-Flow en Supabase:', err);
   }
 
   return { transactions, suggestedPayerId };

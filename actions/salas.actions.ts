@@ -2,200 +2,192 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServer } from '@/lib/supabase/server';
-import {
-  getSalas as getLocalSalas,
-  getSalaById as getLocalSalaById,
-  createSala as createLocalSala,
-  addVirtualMember as addLocalVirtualMember,
-  claimAccount as claimLocalAccount,
-} from '@/lib/store';
 import { Sala, Member, TicketItem } from '@/lib/types';
 import { getCurrentUserAction } from '@/actions/user.actions';
 
 export async function getSalasAction(): Promise<Sala[]> {
-  try {
-    const supabase = await getSupabaseServer();
-    const { data: salasData, error } = await supabase
-      .from('salas')
-      .select(`
+  const supabase = await getSupabaseServer();
+  const { data: salasData, error } = await supabase
+    .from('salas')
+    .select(`
+      *,
+      members:sala_members(*),
+      eventos(
         *,
-        members:sala_members(*),
-        eventos(
+        items:ticket_items(
           *,
-          items:ticket_items(
-            *,
-            assignments:ticket_item_assignments(*)
-          ),
-          liquidaciones(*)
-        )
-      `)
-      .order('last_activity_at', { ascending: false, nullsFirst: false });
+          assignments:ticket_item_assignments(*)
+        ),
+        liquidaciones(*)
+      )
+    `)
+    .order('last_activity_at', { ascending: false, nullsFirst: false });
 
-    if (!error && salasData && salasData.length > 0) {
-      return salasData.map((s) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description || '',
-        icon: s.icon || 'groups',
-        debtThreshold: Number(s.debt_threshold || -50),
-        boteComun: Number(s.bote_comun || 0),
-        pass: {
-          type: s.pass_type || 'pase_sala',
-          status: s.pass_status || 'activo',
-          eventsUsed: s.pass_events_used || 0,
-          maxEvents: s.pass_max_events || 20,
-        },
-        members: (s.members || []).map((m: Record<string, unknown>) => ({
-          id: String(m.id),
-          name: String(m.name),
-          phone: m.phone ? String(m.phone) : undefined,
-          avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
-          isVirtual: Boolean(m.is_virtual),
-          claimToken: m.claim_token ? String(m.claim_token) : undefined,
-        })),
-        eventos: (s.eventos || [])
-          .sort(
-            (a: Record<string, unknown>, b: Record<string, unknown>) =>
-              new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
-              new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
-          )
-          .map((e: Record<string, unknown>) => ({
-          id: String(e.id),
-          salaId: String(e.sala_id || s.id),
-          title: String(e.title),
-          venue: String(e.venue),
-          date: String(e.date),
-          status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
-          originalPayerId: String(e.original_payer_id || 'm1'),
-          items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
-            id: String(it.id),
-            name: String(it.name),
-            quantity: Number(it.quantity || 1),
-            unit_price: Number(it.unit_price || 0),
-            total_price: Number(it.total_price || 0),
-            category: (it.category as TicketItem['category']) || 'food',
-            assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
-              String(a.member_id)
-            ),
-          })),
-          commonCosts: [],
-          globalModifiers: {},
-          totalAmount: Number(e.total_amount || 0),
-          transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
-            id: String(l.id),
-            fromMemberId: String(l.from_member_id),
-            toMemberId: String(l.to_member_id),
-            amount: Number(l.amount || 0),
-            status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
-            suggestedAt: String(l.suggested_at || new Date().toISOString()),
-            updatedAt: String(l.updated_at || new Date().toISOString()),
-            note: l.note ? String(l.note) : undefined,
-            ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
-          })),
-        })),
-        createdAt: s.created_at || new Date().toISOString(),
-        lastActivityAt: s.last_activity_at || new Date().toISOString(),
-      }));
-    }
-  } catch (err) {
-    console.warn('[Supabase] Usando almacén local para getSalasAction:', err);
+  if (error) {
+    console.error('[Supabase] Error fetching salas:', error);
+    throw new Error('Error al obtener las salas desde Supabase');
   }
 
-  return getLocalSalas();
+  if (!salasData || salasData.length === 0) {
+    return [];
+  }
+
+  return salasData.map((s) => ({
+    id: s.id,
+    name: s.name,
+    description: s.description || '',
+    icon: s.icon || 'groups',
+    debtThreshold: Number(s.debt_threshold || -50),
+    boteComun: Number(s.bote_comun || 0),
+    pass: {
+      type: s.pass_type || 'pase_sala',
+      status: s.pass_status || 'activo',
+      eventsUsed: s.pass_events_used || 0,
+      maxEvents: s.pass_max_events || 20,
+    },
+    members: (s.members || []).map((m: Record<string, unknown>) => ({
+      id: String(m.id),
+      name: String(m.name),
+      phone: m.phone ? String(m.phone) : undefined,
+      avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
+      isVirtual: Boolean(m.is_virtual),
+      claimToken: m.claim_token ? String(m.claim_token) : undefined,
+    })),
+    eventos: (s.eventos || [])
+      .sort(
+        (a: Record<string, unknown>, b: Record<string, unknown>) =>
+          new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
+          new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
+      )
+      .map((e: Record<string, unknown>) => ({
+        id: String(e.id),
+        salaId: String(e.sala_id || s.id),
+        title: String(e.title),
+        venue: String(e.venue),
+        date: String(e.date),
+        status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
+        originalPayerId: String(e.original_payer_id || 'm1'),
+        items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
+          id: String(it.id),
+          name: String(it.name),
+          quantity: Number(it.quantity || 1),
+          unit_price: Number(it.unit_price || 0),
+          total_price: Number(it.total_price || 0),
+          category: (it.category as TicketItem['category']) || 'food',
+          assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
+            String(a.member_id)
+          ),
+        })),
+        commonCosts: [],
+        globalModifiers: {},
+        totalAmount: Number(e.total_amount || 0),
+        transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
+          id: String(l.id),
+          fromMemberId: String(l.from_member_id),
+          toMemberId: String(l.to_member_id),
+          amount: Number(l.amount || 0),
+          status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
+          suggestedAt: String(l.suggested_at || new Date().toISOString()),
+          updatedAt: String(l.updated_at || new Date().toISOString()),
+          note: l.note ? String(l.note) : undefined,
+          ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
+        })),
+      })),
+    createdAt: s.created_at || new Date().toISOString(),
+    lastActivityAt: s.last_activity_at || new Date().toISOString(),
+  }));
 }
 
 export async function getSalaDetailAction(salaId: string): Promise<Sala | null> {
-  try {
-    const supabase = await getSupabaseServer();
-    const { data: s, error } = await supabase
-      .from('salas')
-      .select(`
+  const supabase = await getSupabaseServer();
+  const { data: s, error } = await supabase
+    .from('salas')
+    .select(`
+      *,
+      members:sala_members(*),
+      eventos(
         *,
-        members:sala_members(*),
-        eventos(
+        items:ticket_items(
           *,
-          items:ticket_items(
-            *,
-            assignments:ticket_item_assignments(*)
-          ),
-          liquidaciones(*)
-        )
-      `)
-      .eq('id', salaId)
-      .single();
+          assignments:ticket_item_assignments(*)
+        ),
+        liquidaciones(*)
+      )
+    `)
+    .eq('id', salaId)
+    .single();
 
-    if (!error && s) {
-      return {
-        id: s.id,
-        name: s.name,
-        description: s.description || '',
-        icon: s.icon || 'groups',
-        debtThreshold: Number(s.debt_threshold || -50),
-        boteComun: Number(s.bote_comun || 0),
-        pass: {
-          type: s.pass_type || 'pase_sala',
-          status: s.pass_status || 'activo',
-          eventsUsed: s.pass_events_used || 0,
-          maxEvents: s.pass_max_events || 20,
-        },
-        members: (s.members || []).map((m: Record<string, unknown>) => ({
-          id: String(m.id),
-          name: String(m.name),
-          phone: m.phone ? String(m.phone) : undefined,
-          avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
-          isVirtual: Boolean(m.is_virtual),
-          claimToken: m.claim_token ? String(m.claim_token) : undefined,
-        })),
-        eventos: (s.eventos || [])
-          .sort(
-            (a: Record<string, unknown>, b: Record<string, unknown>) =>
-              new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
-              new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
-          )
-          .map((e: Record<string, unknown>) => ({
-          id: String(e.id),
-          salaId: String(e.sala_id || s.id),
-          title: String(e.title),
-          venue: String(e.venue),
-          date: String(e.date),
-          status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
-          originalPayerId: String(e.original_payer_id || 'm1'),
-          items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
-            id: String(it.id),
-            name: String(it.name),
-            quantity: Number(it.quantity || 1),
-            unit_price: Number(it.unit_price || 0),
-            total_price: Number(it.total_price || 0),
-            category: (it.category as TicketItem['category']) || 'food',
-            assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
-              String(a.member_id)
-            ),
-          })),
-          commonCosts: [],
-          globalModifiers: {},
-          totalAmount: Number(e.total_amount || 0),
-          transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
-            id: String(l.id),
-            fromMemberId: String(l.from_member_id),
-            toMemberId: String(l.to_member_id),
-            amount: Number(l.amount || 0),
-            status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
-            suggestedAt: String(l.suggested_at || new Date().toISOString()),
-            updatedAt: String(l.updated_at || new Date().toISOString()),
-            note: l.note ? String(l.note) : undefined,
-            ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
-          })),
-        })),
-        createdAt: s.created_at || new Date().toISOString(),
-        lastActivityAt: s.last_activity_at || new Date().toISOString(),
-      };
-    }
-  } catch (err) {
-    console.warn('[Supabase] Usando almacén local para getSalaDetailAction:', err);
+  if (error) {
+    console.error(`[Supabase] Error fetching sala ${salaId}:`, error);
+    return null;
   }
 
-  const localSala = getLocalSalaById(salaId);
-  return localSala || null;
+  if (!s) return null;
+
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description || '',
+    icon: s.icon || 'groups',
+    debtThreshold: Number(s.debt_threshold || -50),
+    boteComun: Number(s.bote_comun || 0),
+    pass: {
+      type: s.pass_type || 'pase_sala',
+      status: s.pass_status || 'activo',
+      eventsUsed: s.pass_events_used || 0,
+      maxEvents: s.pass_max_events || 20,
+    },
+    members: (s.members || []).map((m: Record<string, unknown>) => ({
+      id: String(m.id),
+      name: String(m.name),
+      phone: m.phone ? String(m.phone) : undefined,
+      avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
+      isVirtual: Boolean(m.is_virtual),
+      claimToken: m.claim_token ? String(m.claim_token) : undefined,
+    })),
+    eventos: (s.eventos || [])
+      .sort(
+        (a: Record<string, unknown>, b: Record<string, unknown>) =>
+          new Date(String(b.updated_at || b.created_at || b.date || 0)).getTime() -
+          new Date(String(a.updated_at || a.created_at || a.date || 0)).getTime()
+      )
+      .map((e: Record<string, unknown>) => ({
+        id: String(e.id),
+        salaId: String(e.sala_id || s.id),
+        title: String(e.title),
+        venue: String(e.venue),
+        date: String(e.date),
+        status: (e.status as 'en_curso' | 'cerrado') || 'en_curso',
+        originalPayerId: String(e.original_payer_id || 'm1'),
+        items: ((e.items as Array<Record<string, unknown>>) || []).map((it) => ({
+          id: String(it.id),
+          name: String(it.name),
+          quantity: Number(it.quantity || 1),
+          unit_price: Number(it.unit_price || 0),
+          total_price: Number(it.total_price || 0),
+          category: (it.category as TicketItem['category']) || 'food',
+          assignedMemberIds: ((it.assignments as Array<Record<string, unknown>>) || []).map((a) =>
+            String(a.member_id)
+          ),
+        })),
+        commonCosts: [],
+        globalModifiers: {},
+        totalAmount: Number(e.total_amount || 0),
+        transactions: ((e.liquidaciones as Array<Record<string, unknown>>) || []).map((l) => ({
+          id: String(l.id),
+          fromMemberId: String(l.from_member_id),
+          toMemberId: String(l.to_member_id),
+          amount: Number(l.amount || 0),
+          status: (l.status as 'propuesta' | 'pendiente' | 'consolidado') || 'propuesta',
+          suggestedAt: String(l.suggested_at || new Date().toISOString()),
+          updatedAt: String(l.updated_at || new Date().toISOString()),
+          note: l.note ? String(l.note) : undefined,
+          ruleApplied: (l.rule_applied as 'regla_1' | 'regla_2' | 'regla_3' | 'regla_4_min_cash_flow') || 'regla_4_min_cash_flow',
+        })),
+      })),
+    createdAt: s.created_at || new Date().toISOString(),
+    lastActivityAt: s.last_activity_at || new Date().toISOString(),
+  };
 }
 
 export async function crearSalaAction(name: string, description: string): Promise<Sala> {
@@ -214,58 +206,64 @@ export async function crearSalaAction(name: string, description: string): Promis
 
   const creatorMemberId = currentUser.id;
 
-  const localSala = createLocalSala(name, description, creatorMemberId);
-  localSala.id = salaSlug;
-  localSala.members = [
-    {
+  const supabase = await getSupabaseServer();
+  const { error: salaError } = await supabase.from('salas').insert({
+    id: salaSlug,
+    name: name,
+    description: description,
+    icon: 'groups',
+    debt_threshold: -50.0,
+    bote_comun: 0.0,
+    pass_type: 'pase_sala',
+    pass_status: 'activo',
+    pass_events_used: 0,
+    pass_max_events: 20,
+  });
+
+  if (salaError) {
+    console.error('[Supabase] Error al crear sala:', salaError);
+    throw new Error('Error al crear sala en base de datos');
+  }
+
+  const { error: memberError } = await supabase.from('sala_members').insert({
+    id: creatorMemberId,
+    sala_id: salaSlug,
+    name: currentUser.nick || currentUser.name,
+    phone: currentUser.phone || null,
+    avatar_url: currentUser.avatar_url || null,
+    is_virtual: false,
+    user_id: creatorMemberId,
+    registered_user_id: creatorMemberId,
+  });
+
+  if (memberError) {
+    console.error('[Supabase] Error al insertar creador en sala_members:', memberError);
+    throw new Error('Error al añadir miembro a la sala');
+  }
+
+  revalidatePath('/');
+  revalidatePath(`/sala/${salaSlug}`);
+  
+  // Return minimum structure needed for UI to continue
+  return {
+    id: salaSlug,
+    name,
+    description,
+    icon: 'groups',
+    debtThreshold: -50.0,
+    boteComun: 0.0,
+    pass: { type: 'pase_sala', status: 'activo', eventsUsed: 0, maxEvents: 20 },
+    members: [{
       id: creatorMemberId,
       name: currentUser.nick || currentUser.name,
       phone: currentUser.phone || undefined,
       avatarUrl: currentUser.avatar_url || undefined,
       isVirtual: false,
-    },
-  ];
-
-  try {
-    const supabase = await getSupabaseServer();
-    const { error: salaError } = await supabase.from('salas').insert({
-      id: localSala.id,
-      name: localSala.name,
-      description: localSala.description,
-      icon: localSala.icon,
-      debt_threshold: localSala.debtThreshold,
-      bote_comun: localSala.boteComun,
-      pass_type: localSala.pass.type,
-      pass_status: localSala.pass.status,
-      pass_events_used: localSala.pass.eventsUsed,
-      pass_max_events: localSala.pass.maxEvents,
-    });
-
-    if (salaError) {
-      console.error('[Supabase] Error al crear sala en Supabase:', salaError);
-    }
-
-    const { error: memberError } = await supabase.from('sala_members').insert({
-      id: creatorMemberId,
-      sala_id: localSala.id,
-      name: currentUser.nick || currentUser.name,
-      phone: currentUser.phone || null,
-      avatar_url: currentUser.avatar_url || null,
-      is_virtual: false,
-      user_id: creatorMemberId,
-      registered_user_id: creatorMemberId,
-    });
-
-    if (memberError) {
-      console.error('[Supabase] Error al insertar creador en sala_members:', memberError);
-    }
-  } catch (err) {
-    console.warn('[Supabase] Fallo al insertar sala en Supabase:', err);
-  }
-
-  revalidatePath('/');
-  revalidatePath(`/sala/${localSala.id}`);
-  return localSala;
+    }],
+    eventos: [],
+    createdAt: new Date().toISOString(),
+    lastActivityAt: new Date().toISOString(),
+  };
 }
 
 export async function anadirMiembroVirtualAction(salaId: string, name: string): Promise<Member | null> {
@@ -281,26 +279,18 @@ export async function anadirMiembroVirtualAction(salaId: string, name: string): 
     claimToken,
   };
 
-  try {
-    const supabase = await getSupabaseServer();
-    const { error } = await supabase.from('sala_members').insert({
-      id: newMember.id,
-      sala_id: salaId,
-      name: newMember.name,
-      is_virtual: true,
-      claim_token: newMember.claimToken,
-    });
-    if (error) {
-      console.error('[Supabase] Error al insertar miembro virtual:', error);
-    }
-  } catch (err) {
-    console.warn('[Supabase] Fallo al insertar miembro virtual en Supabase:', err);
-  }
-
-  // Sincronizar en store local si existe la sala
-  const localSala = getLocalSalaById(salaId);
-  if (localSala) {
-    localSala.members.push(newMember);
+  const supabase = await getSupabaseServer();
+  const { error } = await supabase.from('sala_members').insert({
+    id: newMember.id,
+    sala_id: salaId,
+    name: newMember.name,
+    is_virtual: true,
+    claim_token: newMember.claimToken,
+  });
+  
+  if (error) {
+    console.error('[Supabase] Error al insertar miembro virtual:', error);
+    throw new Error('No se pudo añadir el miembro virtual');
   }
 
   revalidatePath(`/sala/${salaId}`);
@@ -314,29 +304,36 @@ export async function reclamarCuentaVirtualAction(
   newUserName: string,
   newUserPhone?: string
 ): Promise<{ success: boolean; message: string }> {
-  const success = claimLocalAccount(claimToken, newUserId, newUserName, newUserPhone);
+  const supabase = await getSupabaseServer();
+  
+  const { data, error: selectError } = await supabase
+    .from('sala_members')
+    .select('id')
+    .eq('claim_token', claimToken)
+    .single();
 
-  if (success) {
-    try {
-      const supabase = await getSupabaseServer();
-      await supabase
-        .from('sala_members')
-        .update({
-          is_virtual: false,
-          user_id: newUserId,
-          name: newUserName,
-          phone: newUserPhone || null,
-          registered_user_id: newUserId,
-        })
-        .eq('claim_token', claimToken);
-    } catch (err) {
-      console.warn('[Supabase] Fallo al sincronizar claim con Supabase:', err);
-    }
-
-    revalidatePath('/');
-    return { success: true, message: 'Cuenta vinculada exitosamente. Se ha migrado tu saldo e histórico.' };
+  if (selectError || !data) {
+    return { success: false, message: 'Token de claim inválido o expirado.' };
   }
-  return { success: false, message: 'Token de claim inválido o expirado.' };
+
+  const { error: updateError } = await supabase
+    .from('sala_members')
+    .update({
+      is_virtual: false,
+      user_id: newUserId,
+      name: newUserName,
+      phone: newUserPhone || null,
+      registered_user_id: newUserId,
+    })
+    .eq('claim_token', claimToken);
+
+  if (updateError) {
+    console.error('[Supabase] Fallo al sincronizar claim con Supabase:', updateError);
+    return { success: false, message: 'Fallo al vincular la cuenta en el servidor.' };
+  }
+
+  revalidatePath('/');
+  return { success: true, message: 'Cuenta vinculada exitosamente. Se ha migrado tu saldo e histórico.' };
 }
 
 export async function comprarPaseSalaAction(
@@ -350,30 +347,19 @@ export async function comprarPaseSalaAction(
     effectiveBuyerId = currentUser.id;
   }
   
-  const sala = getLocalSalaById(salaId);
-  if (!sala) return { success: false, message: 'Sala no encontrada' };
+  const supabase = await getSupabaseServer();
+  const { error } = await supabase
+    .from('salas')
+    .update({
+      pass_status: 'activo',
+      pass_events_used: 0,
+      pass_max_events: 20,
+    })
+    .eq('id', salaId);
 
-  sala.pass = {
-    type: 'pase_sala',
-    status: 'activo',
-    eventsUsed: 0,
-    maxEvents: 20,
-    purchasedByMemberId: buyerMemberId,
-    expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-  };
-
-  try {
-    const supabase = await getSupabaseServer();
-    await supabase
-      .from('salas')
-      .update({
-        pass_status: 'activo',
-        pass_events_used: 0,
-        pass_max_events: 20,
-      })
-      .eq('id', salaId);
-  } catch (err) {
-    console.warn('[Supabase] Fallo al actualizar pase en Supabase:', err);
+  if (error) {
+    console.error('[Supabase] Fallo al actualizar pase en Supabase:', error);
+    throw new Error('Fallo al procesar la compra del pase de sala');
   }
 
   revalidatePath(`/sala/${salaId}`);
