@@ -186,6 +186,38 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{salas.length} en total</span>
         </div>
 
+        {salas.length === 0 && (
+          <div className="fintech-card p-8 flex flex-col items-center justify-center text-center gap-4 py-12">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/80 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 mb-2 ring-4 ring-slate-50 dark:ring-slate-800/50">
+              <span className="material-symbols-outlined text-3xl">meeting_room</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Aún no tienes salas</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[250px] mx-auto leading-relaxed">
+                Crea una nueva sala para empezar a compartir gastos, o únete a una existente mediante código QR.
+              </p>
+            </div>
+            <div className="flex flex-col w-full gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="w-full py-3.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                Crear mi primera Sala
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
+                className="w-full py-3.5 px-4 rounded-xl bg-slate-50 border border-slate-200/90 hover:bg-slate-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 dark:text-slate-200 font-bold text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[18px] text-emerald-700 dark:text-emerald-400">qr_code_scanner</span>
+                Escanear código QR
+              </button>
+            </div>
+          </div>
+        )}
+
         {salas.map((sala, idx) => {
           const isFeatured = sala.id === 'cenas-viernes';
           const myMember =
