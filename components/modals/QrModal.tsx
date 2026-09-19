@@ -23,7 +23,7 @@ export default function QrModal({
 
   const inviteUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/sala/cenas-viernes/evento/taberna-ilustres?guest_token=${inviteToken}`
-    : `https://stitch.app/guest/${inviteToken}`;
+    : `https://laronda.app/guest/${inviteToken}`;
 
   const handleCopyLink = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {

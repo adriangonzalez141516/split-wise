@@ -1,6 +1,6 @@
 {
-  "name": "Stitch — Plataforma de Gastos Compartidos PWA",
-  "short_name": "Stitch",
+  "name": "LaRonda — Plataforma de Gastos Compartidos PWA",
+  "short_name": "LaRonda",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9f9ff",

@@ -68,7 +68,7 @@ function RegistroForm() {
         <div className="flex flex-col items-center text-center gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight font-heading mb-1 transition-colors">
-              Únete a Stitch
+              Únete a LaRonda
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">
               Tu monedero social, sin comisiones.

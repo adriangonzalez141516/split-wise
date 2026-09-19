@@ -55,7 +55,7 @@ export default function LoginPage() {
             
             <div>
               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight font-heading mb-1 transition-colors">
-                Stitch
+                LaRonda
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">
                 Sincroniza tus cuentas, sin fricciones.
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   required
-                  placeholder="ejemplo@stitch.app"
+                  placeholder="ejemplo@laronda.app"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 dark:border-none bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"

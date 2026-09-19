@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SPLIT-WISE / STITCH DATABASE SCHEMA (PostgreSQL / Supabase)
+-- SPLIT-WISE / LARONDA DATABASE SCHEMA (PostgreSQL / Supabase)
 -- Proyecto: ilznoggvvbepzoocbywx
 -- ==============================================================================
 
@@ -136,7 +136,7 @@ CREATE POLICY "Permitir escritura de liquidaciones" ON public.liquidaciones FOR 
 -- 11. DATOS SEMILLA (SEED DATA)
 -- Perfil del usuario Carlos
 INSERT INTO public.profiles (id, name, email, phone, avatar_url)
-VALUES ('user_carlos_1', 'Carlos M.', 'carlos@stitch.app', '+34 600 112 233', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80')
+VALUES ('user_carlos_1', 'Carlos M.', 'carlos@laronda.app', '+34 600 112 233', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80')
 ON CONFLICT (id) DO NOTHING;
 
 -- Sala principal: Cenas de los Viernes

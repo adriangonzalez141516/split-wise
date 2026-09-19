@@ -19,7 +19,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
   useEffect(() => {
     // Check for offline ticket uploads when returning online
     const handleOnline = async () => {
-      const stored = localStorage.getItem('stitch_offline_tickets');
+      const stored = localStorage.getItem('laronda_offline_tickets');
       if (stored) {
         try {
           const queue = JSON.parse(stored);
@@ -32,7 +32,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
             });
             const data = await res.json();
             if (data.success) {
-              localStorage.removeItem('stitch_offline_tickets');
+              localStorage.removeItem('laronda_offline_tickets');
               setOfflinePending(false);
             }
           }
@@ -116,7 +116,7 @@ export default function ScanTicketModal({ isOpen, onClose, onTicketParsed }: Sca
 
     // If offline, store in localStorage
     if (!navigator.onLine) {
-      localStorage.setItem('stitch_offline_tickets', JSON.stringify(selectedImages));
+      localStorage.setItem('laronda_offline_tickets', JSON.stringify(selectedImages));
       setOfflinePending(true);
       setIsProcessing(false);
       return;

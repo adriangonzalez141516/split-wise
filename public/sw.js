@@ -1,5 +1,5 @@
-// Minimal offline Service Worker for Stitch PWA
-const CACHE_NAME = 'stitch-cache-v1';
+// Minimal offline Service Worker for LaRonda PWA
+const CACHE_NAME = 'laronda-cache-v1';
 const STATIC_ASSETS = ['/', '/manifest.json'];
 
 self.addEventListener('install', (event) => {

@@ -557,7 +557,7 @@ export default function SettlementActionsModal({
         {/* Modal Footer */}
         <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
           <span className="text-[10px] text-slate-400 font-medium">
-            Stitch Core Financial Engine • RGPD & Suma Cero
+            LaRonda Core Financial Engine • RGPD & Suma Cero
           </span>
           <button
             type="button"

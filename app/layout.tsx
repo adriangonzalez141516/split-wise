@@ -3,13 +3,13 @@ import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'Stitch — Plataforma de Gastos Compartidos PWA',
+  title: 'LaRonda — Plataforma de Gastos Compartidos PWA',
   description: 'Gestión colaborativa de gastos en tiempo real, división inteligente de tickets con IA y liquidación Min-Cash-Flow.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Stitch Gastos',
+    title: 'LaRonda Gastos',
   },
 };
 
