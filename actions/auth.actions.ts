@@ -89,3 +89,13 @@ export async function signInAction(data: { email: string; password: string }) {
     return { success: false, message: error.message || 'Credenciales incorrectas' };
   }
 }
+
+export async function signOutAction() {
+  try {
+    const supabase = await getSupabaseServer();
+    await supabase.auth.signOut();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}

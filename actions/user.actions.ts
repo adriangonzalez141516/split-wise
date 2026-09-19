@@ -43,3 +43,32 @@ export async function getCurrentUserAction(): Promise<UserProfile | null> {
     return null;
   }
 }
+
+export async function updateUserProfileAction(data: { nick: string; phone: string }) {
+  try {
+    const supabase = await getSupabaseServer();
+    const { data: userData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !userData?.user) {
+      return { success: false, message: 'Usuario no autenticado' };
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        nick: data.nick,
+        phone: data.phone,
+      })
+      .eq('id', userData.user.id);
+
+    if (error) {
+      console.error('Error al actualizar el perfil:', error);
+      return { success: false, message: 'Error al guardar los cambios en la base de datos' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Exception en update profile:', error);
+    return { success: false, message: error.message || 'Error inesperado' };
+  }
+}
