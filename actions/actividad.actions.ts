@@ -21,14 +21,21 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
   const activities: ActivityItem[] = [];
 
   for (const sala of salas) {
-    const isMember = sala.members.some(
-      (m) => m.id === currentUserId || m.registeredUserId === currentUserId
-    );
-    if (!isMember && currentUserId !== 'm1' && currentUserId !== 'user-carlos') {
-        // En entorno local o sin auth estricto, m1 y user-carlos suelen pasar. 
-        // Si no somos miembros, saltamos (aunque getSalasAction ya suele filtrar por RLS).
-        continue;
-    }
+    // Sala Creada
+    const adminMember = sala.members[0];
+    const adminName = adminMember ? adminMember.name : 'Alguien';
+    activities.push({
+      id: `sala-${sala.id}`,
+      type: 'evento',
+      salaId: sala.id,
+      salaName: sala.name,
+      title: 'Nueva Sala',
+      description: `Creó el grupo "${sala.name}"`,
+      amount: 0,
+      timestamp: sala.createdAt || new Date().toISOString(),
+      actorId: adminMember ? adminMember.id : 'unknown',
+      actorName: adminName,
+    });
 
     // Procesar Eventos
     for (const ev of sala.eventos || []) {
@@ -41,17 +48,31 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
         salaId: sala.id,
         salaName: sala.name,
         title: ev.title || ev.venue,
-        description: `Añadió un nuevo ticket/evento de ${ev.totalAmount.toFixed(2)}€`,
+        description: `Añadió un nuevo evento por ${ev.totalAmount.toFixed(2)}€`,
         amount: ev.totalAmount,
-        timestamp: ev.date || sala.createdAt, // fallback a creación de sala si falla
+        timestamp: ev.date || sala.createdAt || new Date().toISOString(),
         actorId: ev.originalPayerId,
         actorName: payerName,
       });
 
+      // Procesar Platos (Items)
+      for (const item of ev.items || []) {
+        activities.push({
+          id: `item-${item.id}`,
+          type: 'evento',
+          salaId: sala.id,
+          salaName: sala.name,
+          title: item.name,
+          description: `Añadió "${item.name}" al evento ${ev.venue || ev.title}`,
+          amount: item.total_price || (item.unit_price * item.quantity),
+          timestamp: ev.date || sala.createdAt || new Date().toISOString(),
+          actorId: ev.originalPayerId, // Asumimos que el creador del evento o pagador lo añade
+          actorName: payerName,
+        });
+      }
+
       // Procesar Liquidaciones asociadas al evento
       for (const liq of ev.transactions || []) {
-        // Solo mostrar liquidaciones si nos involucran directamente o si queremos ver todo?
-        // En una app como Splitwise el feed global muestra TODO lo del grupo.
         const fromMember = sala.members.find((m) => m.id === liq.fromMemberId);
         const toMember = sala.members.find((m) => m.id === liq.toMemberId);
         
@@ -77,7 +98,7 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
           title: 'Liquidación',
           description: desc,
           amount: liq.amount,
-          timestamp: liq.updatedAt || liq.suggestedAt,
+          timestamp: liq.updatedAt || liq.suggestedAt || new Date().toISOString(),
           actorId: liq.fromMemberId,
           actorName: fromName,
           isPositiveForMe,
@@ -87,5 +108,9 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
   }
 
   // Ordenar cronológicamente (más reciente primero)
-  return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return activities.sort((a, b) => {
+    const timeA = new Date(a.timestamp).getTime();
+    const timeB = new Date(b.timestamp).getTime();
+    return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+  });
 }
