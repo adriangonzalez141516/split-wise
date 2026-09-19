@@ -63,15 +63,8 @@ function RegistroForm() {
       <div className="bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-10 border border-white/10 shadow-2xl overflow-hidden">
         {/* Edge Highlights */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"></div>
-        
+
         <div className="flex flex-col items-center text-center gap-4 mb-6">
-          <div className="relative group cursor-default">
-            <div className="absolute inset-0 bg-emerald-400 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white shadow-lg transform transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3">
-              <span className="material-symbols-outlined text-[32px]">person_add</span>
-            </div>
-          </div>
-          
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight font-heading mb-1">
               Únete a Stitch
@@ -109,7 +102,7 @@ function RegistroForm() {
         )}
 
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
-          
+
           {/* Fila Doble: Nombre y Nick */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -234,7 +227,7 @@ export default function RegistroPage() {
         <div className="absolute -bottom-[20%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-teal-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute top-[40%] right-[20%] w-[40vw] h-[40vw] rounded-full bg-emerald-400/10 blur-[80px] animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div>
-      
+
       <Suspense fallback={<div className="text-sm text-slate-400 font-medium z-10 relative">Cargando...</div>}>
         <RegistroForm />
       </Suspense>
