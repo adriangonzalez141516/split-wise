@@ -4,15 +4,17 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { reclamarCuentaVirtualAction } from '@/actions/salas.actions';
+import { signUpAction } from '@/actions/auth.actions';
 
 function RegistroForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const claimToken = searchParams.get('claim_token') || '';
 
-  const [name, setName] = useState(claimToken ? 'Marta' : '');
+  const [name, setName] = useState('');
+  const [nick, setNick] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState(claimToken ? '654 112 233' : '');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -24,12 +26,21 @@ function RegistroForm() {
     setErrorMessage(null);
 
     try {
-      if (claimToken) {
-        // Run Claim Account migration
+      // 1. Sign up user in Supabase
+      const signUpRes = await signUpAction({ email, password, name, nick, phone });
+      if (!signUpRes.success) {
+        setErrorMessage(signUpRes.message);
+        setLoading(false);
+        return;
+      }
+
+      // 2. If it is a claim flow, migrate account
+      if (claimToken && signUpRes.userId) {
+        // We pass nick || name to override their virtual name in the room
         const res = await reclamarCuentaVirtualAction(
           claimToken,
-          `user-${Date.now().toString().slice(-4)}`,
-          name,
+          signUpRes.userId,
+          nick || name,
           phone
         );
         if (res.success) {
@@ -41,7 +52,8 @@ function RegistroForm() {
         }
       } else {
         // Standard registration
-        setTimeout(() => router.push('/'), 600);
+        setSuccessMessage('Cuenta creada exitosamente.');
+        setTimeout(() => router.push('/'), 800);
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Error durante el registro');
@@ -87,7 +99,7 @@ function RegistroForm() {
 
       <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
         <div>
-          <label className="text-xs font-semibold text-on-surface block mb-1">Nombre y Apellidos</label>
+          <label className="text-xs font-semibold text-on-surface block mb-1">Nombre Completo</label>
           <input
             type="text"
             required
@@ -99,10 +111,21 @@ function RegistroForm() {
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-on-surface block mb-1">Teléfono móvil (para Bizum)</label>
+          <label className="text-xs font-semibold text-on-surface block mb-1">Nick (Alias)</label>
+          <input
+            type="text"
+            required
+            placeholder="ej. Charly"
+            value={nick}
+            onChange={(e) => setNick(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant/40 text-xs bg-surface focus:outline-primary transition-colors"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-on-surface block mb-1">Teléfono móvil (Bizum - Opcional)</label>
           <input
             type="tel"
-            required
             placeholder="600 000 000"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}

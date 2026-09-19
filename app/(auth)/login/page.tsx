@@ -3,19 +3,31 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signInAction } from '@/actions/auth.actions';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('carlos@stitch.app');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push('/');
-    }, 500);
+    setErrorMessage(null);
+    try {
+      const res = await signInAction({ email, password });
+      if (res.success) {
+        router.push('/');
+      } else {
+        setErrorMessage(res.message || 'Credenciales incorrectas');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,6 +40,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-on-surface tracking-tight">Stitch</h1>
           <p className="text-xs text-outline">Plataforma de Gastos Compartidos &amp; Reparto en Vivo</p>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 bg-red-100 text-red-800 text-xs rounded-xl font-medium text-center">
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div>
@@ -60,7 +78,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="min-h-[44px] w-full mt-2 py-2.5 rounded-xl bg-primary hover:bg-emerald-700 active:scale-98 text-white font-semibold text-xs transition-all shadow-xs"
+            className="min-h-[44px] w-full mt-2 py-2.5 rounded-xl bg-primary hover:bg-emerald-700 active:scale-98 text-white font-semibold text-xs transition-all shadow-xs disabled:opacity-50"
           >
             {loading ? 'Accediendo...' : 'Iniciar Sesión'}
           </button>
