@@ -8,9 +8,9 @@ import {
   createSala as createLocalSala,
   addVirtualMember as addLocalVirtualMember,
   claimAccount as claimLocalAccount,
-  CURRENT_USER_ID,
 } from '@/lib/store';
 import { Sala, Member, TicketItem } from '@/lib/types';
+import { getCurrentUserAction } from '@/actions/user.actions';
 
 export async function getSalasAction(): Promise<Sala[]> {
   try {
@@ -199,6 +199,9 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
 }
 
 export async function crearSalaAction(name: string, description: string): Promise<Sala> {
+  const currentUser = await getCurrentUserAction();
+  if (!currentUser) throw new Error('No autorizado');
+
   const salaSlug =
     name
       .toLowerCase()
@@ -209,14 +212,16 @@ export async function crearSalaAction(name: string, description: string): Promis
     '-' +
     Date.now().toString().slice(-4);
 
-  const creatorMemberId = `user-carlos-${Date.now().toString().slice(-6)}`;
+  const creatorMemberId = currentUser.id;
 
   const localSala = createLocalSala(name, description, creatorMemberId);
   localSala.id = salaSlug;
   localSala.members = [
     {
       id: creatorMemberId,
-      name: 'Carlos (Tú)',
+      name: currentUser.nick || currentUser.name,
+      phone: currentUser.phone || undefined,
+      avatarUrl: currentUser.avatar_url || undefined,
       isVirtual: false,
     },
   ];
@@ -243,10 +248,12 @@ export async function crearSalaAction(name: string, description: string): Promis
     const { error: memberError } = await supabase.from('sala_members').insert({
       id: creatorMemberId,
       sala_id: localSala.id,
-      name: 'Carlos (Tú)',
-      phone: '+34 600 112 233',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      name: currentUser.nick || currentUser.name,
+      phone: currentUser.phone || null,
+      avatar_url: currentUser.avatar_url || null,
       is_virtual: false,
+      user_id: creatorMemberId,
+      registered_user_id: creatorMemberId,
     });
 
     if (memberError) {
@@ -334,8 +341,15 @@ export async function reclamarCuentaVirtualAction(
 
 export async function comprarPaseSalaAction(
   salaId: string,
-  buyerMemberId: string = CURRENT_USER_ID
+  buyerMemberId?: string
 ): Promise<{ success: boolean; message: string }> {
+  let effectiveBuyerId = buyerMemberId;
+  if (!effectiveBuyerId) {
+    const currentUser = await getCurrentUserAction();
+    if (!currentUser) return { success: false, message: 'No autorizado' };
+    effectiveBuyerId = currentUser.id;
+  }
+  
   const sala = getLocalSalaById(salaId);
   if (!sala) return { success: false, message: 'Sala no encontrada' };
 

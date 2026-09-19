@@ -12,9 +12,10 @@ import { crearSalaAction } from '@/actions/salas.actions';
 interface DashboardViewProps {
   wallet: UserGlobalWallet;
   salas: Sala[];
+  currentUserId: string;
 }
 
-export default function DashboardView({ wallet, salas }: DashboardViewProps) {
+export default function DashboardView({ wallet, salas, currentUserId }: DashboardViewProps) {
   const router = useRouter();
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
@@ -188,12 +189,12 @@ export default function DashboardView({ wallet, salas }: DashboardViewProps) {
           const myMember =
             sala.members.find(
               (m) =>
+                m.id === currentUserId ||
+                m.registeredUserId === currentUserId ||
                 m.id === 'm1' ||
-                m.id === 'user-carlos' ||
-                m.name.includes('(Tú)') ||
-                m.name.toLowerCase().includes('carlos')
+                m.name.includes('(Tú)')
             ) || sala.members[0];
-          const targetId = myMember ? myMember.id : CURRENT_USER_ID;
+          const targetId = myMember ? myMember.id : currentUserId;
           const roomCalc = calculateRoomBalance(sala, targetId);
           const net = roomCalc.netBalance;
 

@@ -3,16 +3,18 @@
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import {
-  getEventoById as getLocalEventoById,
+  getSalas as getLocalSalas,
   getSalaById as getLocalSalaById,
-  toggleItemClaim as toggleLocalItemClaim,
-  excludeAlcoholForMember as excludeLocalAlcoholForMember,
-  addItemToEvento as addLocalItemToEvento,
-  addMultipleItemsToEvento as addLocalMultipleItemsToEvento,
+  getEventoById as getLocalEventoById,
+  toggleItemClaim as toggleLocalClaim,
+  excludeAlcoholForMember as excludeLocalAlcohol,
+  updateTransactionStatus as updateLocalTx,
+  addItemToEvento as addLocalItem,
+  addMultipleItemsToEvento as addMultipleLocalItems,
   createEvento as createLocalEvento,
-  CURRENT_USER_ID,
 } from '@/lib/store';
 import { Evento, TicketItem } from '@/lib/types';
+import { getCurrentUserAction } from '@/actions/user.actions';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
 
 export async function getEventoDetailAction(salaId: string, eventoId: string): Promise<Evento | null> {
@@ -75,24 +77,31 @@ export async function getEventoDetailAction(salaId: string, eventoId: string): P
   return localEvento || null;
 }
 
-export async function togglePlatoClaimAction(
+export async function toggleItemClaimAction(
   salaId: string,
   eventoId: string,
   itemId: string,
-  memberId: string = CURRENT_USER_ID
-): Promise<{ success: boolean; item?: TicketItem }> {
+  memberId?: string
+): Promise<{ success: boolean; message: string }> {
+  let effectiveMemberId = memberId;
+  if (!effectiveMemberId) {
+    const currentUser = await getCurrentUserAction();
+    if (!currentUser) return { success: false, message: 'No autorizado' };
+    effectiveMemberId = currentUser.id;
+  }
+
   let isAssignedNow = false;
 
   try {
     const supabase = getSupabaseServer();
 
     // Resolver memberId válido para esta sala (defensa ante fallbacks)
-    let effectiveMemberId = memberId;
+    let memberInSalaId = effectiveMemberId;
     const { data: memberInSala } = await supabase
       .from('sala_members')
       .select('id')
       .eq('sala_id', salaId)
-      .eq('id', memberId)
+      .eq('id', effectiveMemberId)
       .maybeSingle();
 
     if (!memberInSala) {
@@ -104,7 +113,7 @@ export async function togglePlatoClaimAction(
         .maybeSingle();
 
       if (fallbackMember) {
-        effectiveMemberId = fallbackMember.id;
+        memberInSalaId = fallbackMember.id;
       } else {
         const { data: firstMember } = await supabase
           .from('sala_members')
@@ -112,7 +121,7 @@ export async function togglePlatoClaimAction(
           .eq('sala_id', salaId)
           .limit(1)
           .maybeSingle();
-        if (firstMember) effectiveMemberId = firstMember.id;
+        if (firstMember) memberInSalaId = firstMember.id;
       }
     }
 
@@ -121,7 +130,7 @@ export async function togglePlatoClaimAction(
       .from('ticket_item_assignments')
       .select('id')
       .eq('item_id', itemId)
-      .eq('member_id', effectiveMemberId)
+      .eq('member_id', memberInSalaId)
       .maybeSingle();
 
     if (checkError) {
@@ -134,7 +143,7 @@ export async function togglePlatoClaimAction(
         .from('ticket_item_assignments')
         .delete()
         .eq('item_id', itemId)
-        .eq('member_id', effectiveMemberId);
+        .eq('member_id', memberInSalaId);
 
       if (delError) {
         console.error('[Supabase] Error al eliminar asignación:', delError);
@@ -147,7 +156,7 @@ export async function togglePlatoClaimAction(
         .from('ticket_item_assignments')
         .insert({
           item_id: itemId,
-          member_id: effectiveMemberId,
+          member_id: memberInSalaId,
         });
 
       if (insError) {
@@ -161,9 +170,7 @@ export async function togglePlatoClaimAction(
   }
 
   // Sincronizar también el almacén local si existe
-  toggleLocalItemClaim(salaId, eventoId, itemId, memberId);
-  const evento = getLocalEventoById(salaId, eventoId);
-  const item = evento?.items.find((i) => i.id === itemId);
+  toggleLocalClaim(salaId, eventoId, itemId, effectiveMemberId);
 
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
   revalidatePath(`/sala/${salaId}`);
@@ -171,27 +178,26 @@ export async function togglePlatoClaimAction(
 
   return {
     success: true,
-    item: item || {
-      id: itemId,
-      name: '',
-      quantity: 1,
-      unit_price: 0,
-      total_price: 0,
-      category: 'food',
-      assignedMemberIds: isAssignedNow ? [memberId] : [],
-    },
+    message: 'Asignación actualizada',
   };
 }
 
-export async function excluirAlcoholAction(
+export async function excludeAlcoholAction(
   salaId: string,
   eventoId: string,
-  memberId: string = CURRENT_USER_ID,
+  memberId?: string,
   exclude: boolean = true
-): Promise<{ success: boolean }> {
-  excludeLocalAlcoholForMember(salaId, eventoId, memberId, exclude);
+): Promise<{ success: boolean; message: string }> {
+  let effectiveMemberId = memberId;
+  if (!effectiveMemberId) {
+    const currentUser = await getCurrentUserAction();
+    if (!currentUser) return { success: false, message: 'No autorizado' };
+    effectiveMemberId = currentUser.id;
+  }
+
+  excludeLocalAlcohol(salaId, eventoId, effectiveMemberId, exclude);
   revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
-  return { success: true };
+  return { success: true, message: 'Alcohol actualizado' };
 }
 
 export async function repartirCostesComunesAction(

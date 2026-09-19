@@ -13,10 +13,11 @@ import { anadirMiembroVirtualAction } from '@/actions/salas.actions';
 interface SalaViewProps {
   sala: Sala;
   balanceCalculation: RoomBalanceCalculation;
-  allBalances?: MemberBalanceInfo[];
+  allBalances: { memberId: string; name: string; phone?: string; isVirtual?: boolean; netBalance: number }[];
+  currentUserId: string;
 }
 
-export default function SalaView({ sala, balanceCalculation, allBalances }: SalaViewProps) {
+export default function SalaView({ sala, balanceCalculation, allBalances, currentUserId }: SalaViewProps) {
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -457,12 +458,12 @@ export default function SalaView({ sala, balanceCalculation, allBalances }: Sala
         onOpenScan={() => setShowScanModal(true)}
       />
       <SettlementActionsModal
+        initialTab={settlementModalTab || 'bizum'}
         isOpen={settlementModalTab !== null}
-        initialTab={settlementModalTab || 'request'}
         onClose={() => setSettlementModalTab(null)}
         sala={sala}
         allBalances={effectiveBalances}
-        currentUserId="user-carlos"
+        currentUserId={currentUserId}
       />
 
       {/* Add Virtual Member Modal */}

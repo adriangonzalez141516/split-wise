@@ -7,15 +7,16 @@ import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
-import { togglePlatoClaimAction } from '@/actions/eventos.actions';
+import { toggleItemClaimAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
 
 interface EventoLiveViewProps {
   sala: Sala;
   evento: Evento;
+  currentUserId: string;
 }
 
-export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
+export default function EventoLiveView({ sala, evento, currentUserId }: EventoLiveViewProps) {
   const [activeTab, setActiveTab] = useState<'ticket' | 'balance' | 'settle'>('ticket');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
@@ -35,16 +36,16 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
     setTransactions(evento.transactions);
   }, [evento.transactions]);
 
-  const carlosMember = sala.members.find(
-    (m) =>
-      m.id === 'm1' ||
-      m.id === 'user-carlos' ||
-      m.name.includes('(Tú)') ||
-      m.name.toLowerCase().includes('carlos')
-  );
-  const currentUserId = carlosMember ? carlosMember.id : (sala.members[0]?.id || 'user-carlos');
+  const [localEvento, setLocalEvento] = useState<Evento>(evento);
 
-  // Toggle item claim for Carlos
+  const currentUserMember = sala.members.find(
+    (m) =>
+      m.id === currentUserId ||
+      m.registeredUserId === currentUserId
+  );
+  // targetId already resolves correctly via currentUserId prop
+
+  // Toggle item claim
   const handleToggleClaim = async (itemId: string) => {
     setItems((prev) =>
       prev.map((item) => {
@@ -59,7 +60,8 @@ export default function EventoLiveView({ sala, evento }: EventoLiveViewProps) {
       })
     );
 
-    await togglePlatoClaimAction(sala.id, evento.id, itemId, currentUserId);
+    // API Call
+    await toggleItemClaimAction(sala.id, evento.id, itemId, currentUserId);
   };
 
   // Confirm transaction settlement with confetti

@@ -7,16 +7,21 @@ import {
   calculateRoomBalance,
   getSalaById,
   updateTransactionStatus,
-  CURRENT_USER_ID,
 } from '@/lib/store';
+import { getCurrentUserAction } from '@/actions/user.actions';
 import { UserGlobalWallet, RoomBalanceCalculation, LiquidacionTransaction } from '@/lib/types';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
 
 import { getSalasAction, getSalaDetailAction } from './salas.actions';
 
-export async function getMonederoGlobalAction(userId: string = CURRENT_USER_ID): Promise<UserGlobalWallet> {
+export async function getMonederoGlobalAction(userId?: string): Promise<UserGlobalWallet> {
+  let effectiveUserId = userId;
+  if (!effectiveUserId) {
+    const currentUser = await getCurrentUserAction();
+    effectiveUserId = currentUser ? currentUser.id : 'm1';
+  }
   const salas = await getSalasAction();
-  return calculateUserGlobalWallet(userId, salas);
+  return calculateUserGlobalWallet(effectiveUserId, salas);
 }
 
 export async function getBalancesSalaAction(salaId: string): Promise<RoomBalanceCalculation[]> {
