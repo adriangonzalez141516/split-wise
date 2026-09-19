@@ -30,8 +30,25 @@ export async function signUpAction(data: { email: string; password: string; name
 
     const userId = authData.user.id;
 
-    // 2. Insert the user profile into public.profiles
-    const { error: profileError } = await supabase
+    // Si Supabase no devuelve sesión, significa que la confirmación de email está ACTIVA
+    // y no podemos insertar el perfil sin un Service Role Key o un Trigger de BD.
+    if (!authData.session) {
+      return { 
+        success: false, 
+        message: '⚠️ Debes ir al panel de Supabase > Authentication > Providers > Email y DESACTIVAR "Confirm email". Si no, el perfil no se puede crear automáticamente.' 
+      };
+    }
+
+    // 2. Insert the user profile into public.profiles usando el token de la sesión recién creada
+    const authenticatedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${authData.session.access_token}`,
+        },
+      },
+    });
+
+    const { error: profileError } = await authenticatedSupabase
       .from('profiles')
       .upsert({
         id: userId,
@@ -46,12 +63,6 @@ export async function signUpAction(data: { email: string; password: string; name
       console.error('Error creando perfil:', profileError);
       throw new Error('Error al guardar los datos del perfil.');
     }
-
-    // Attempt to log them in directly after sign up just in case
-    await supabase.auth.signInWithPassword({
-        email,
-        password,
-    });
 
     return { success: true, userId, message: 'Cuenta creada con éxito.' };
   } catch (error: any) {
