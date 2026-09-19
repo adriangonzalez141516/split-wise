@@ -4,6 +4,7 @@ import { parseRouteSlug } from '@/lib/route-utils';
 import { getSalasAction, getSalaDetailAction } from '@/actions/salas.actions';
 import { getEventoDetailAction } from '@/actions/eventos.actions';
 import { getMonederoGlobalAction } from '@/actions/liquidacion.actions';
+import { getActividadGlobalAction } from '@/actions/actividad.actions';
 import { calculateRoomBalance } from '@/lib/store';
 import { getCurrentUserAction } from '@/actions/user.actions';
 import DashboardView from '@/components/views/DashboardView';
@@ -92,7 +93,8 @@ export default async function OrchestratorPage({ params }: PageProps) {
 
   // 4. Actividad View (/actividad)
   if (route.type === 'actividad') {
-    return <ActividadView />;
+    const activities = await getActividadGlobalAction(currentUser.id);
+    return <ActividadView activities={activities} currentUserId={currentUser.id} />;
   }
 
   // 5. Perfil View (/perfil)
