@@ -11,7 +11,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.sala_members 
     WHERE sala_id = _sala_id 
-    AND (user_id = auth.uid() OR registered_user_id = auth.uid())
+    AND (user_id = auth.uid()::text OR registered_user_id = auth.uid()::text)
   );
 $$;
 
@@ -32,7 +32,7 @@ DROP POLICY IF EXISTS "Permitir escritura de liquidaciones" ON public.liquidacio
 
 -- 3. PROFILES: Públicos para leer (por el avatar/nombre), privados para editar
 CREATE POLICY "Leer perfiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Editar propio perfil" ON public.profiles FOR UPDATE USING (id = auth.uid());
+CREATE POLICY "Editar propio perfil" ON public.profiles FOR UPDATE USING (id = auth.uid()::text);
 
 -- 4. SALAS
 CREATE POLICY "Leer salas propias" ON public.salas FOR SELECT USING (public.is_member_of(id));
