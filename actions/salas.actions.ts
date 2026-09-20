@@ -375,29 +375,47 @@ export async function comprarPaseSalaAction(
 }
 
 export async function joinSalaGuestAction(salaId: string, nick: string) {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user || !user.is_anonymous) {
-    throw new Error('Debes ser un invitado anónimo para usar esto.');
+  const currentUser = await getCurrentUserAction();
+  if (!currentUser) {
+    throw new Error('No hay sesión activa.');
   }
 
-  const memberId = `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`;
+  const supabase = await getSupabaseServer();
+  
+  // Check if they are already in the room
+  const { data: existingMember } = await supabase
+    .from('sala_members')
+    .select('id')
+    .eq('sala_id', salaId)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (existingMember) {
+    return { success: true };
+  }
+
+  const isAnonymous = currentUser.is_anonymous;
+  const memberId = isAnonymous 
+    ? `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`
+    : currentUser.id;
 
   const { error } = await supabase.from('sala_members').insert({
     id: memberId,
     sala_id: salaId,
     name: nick.trim(),
-    is_virtual: true,
-    user_id: user.id,
-    registered_user_id: null,
+    phone: currentUser.phone || null,
+    avatar_url: currentUser.avatar_url || null,
+    is_virtual: isAnonymous,
+    user_id: currentUser.id,
+    registered_user_id: isAnonymous ? null : currentUser.id,
   });
 
   if (error) {
-    console.error('[Supabase] Error uniendo invitado a sala:', error);
+    console.error('[Supabase] Error uniendo usuario a sala:', error);
     throw new Error('No se pudo unir a la sala');
   }
   
   revalidatePath(`/sala/${salaId}`);
+  revalidatePath('/');
   return { success: true };
 }
