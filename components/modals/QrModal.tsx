@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface QrModalProps {
   isOpen: boolean;
@@ -62,58 +63,16 @@ export default function QrModal({
 
         {/* Realistic SVG QR Code Display */}
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner flex flex-col items-center">
-          <div className="bg-white p-3 rounded-xl shadow-xs border border-slate-200/70">
-            <svg
+          <div className="bg-white p-3 rounded-xl shadow-xs border border-slate-200/70 flex items-center justify-center aspect-square">
+            <QRCodeSVG
+              value={inviteUrl}
+              size={180}
+              bgColor={"#ffffff"}
+              fgColor={"#0f172a"}
+              level={"M"}
+              includeMargin={false}
               className="w-44 h-44"
-              viewBox="0 0 140 140"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Corner 1: Top-Left */}
-              <rect x="10" y="10" width="36" height="36" rx="6" fill="#0f172a" />
-              <rect x="16" y="16" width="24" height="24" rx="3" fill="#ffffff" />
-              <rect x="22" y="22" width="12" height="12" rx="2" fill="#0f172a" />
-
-              {/* Corner 2: Top-Right */}
-              <rect x="94" y="10" width="36" height="36" rx="6" fill="#0f172a" />
-              <rect x="100" y="16" width="24" height="24" rx="3" fill="#ffffff" />
-              <rect x="106" y="22" width="12" height="12" rx="2" fill="#0f172a" />
-
-              {/* Corner 3: Bottom-Left */}
-              <rect x="10" y="94" width="36" height="36" rx="6" fill="#0f172a" />
-              <rect x="16" y="100" width="24" height="24" rx="3" fill="#ffffff" />
-              <rect x="22" y="106" width="12" height="12" rx="2" fill="#0f172a" />
-
-              {/* Data Blocks / Matrix Simulation */}
-              <rect x="54" y="14" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="68" y="14" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="78" y="24" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="54" y="34" width="16" height="8" rx="1.5" fill="#0f172a" />
-
-              <rect x="14" y="54" width="8" height="14" rx="1.5" fill="#0f172a" />
-              <rect x="30" y="58" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="42" y="52" width="10" height="10" rx="2" fill="#10b981" />
-              <rect x="60" y="54" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="74" y="50" width="12" height="12" rx="2" fill="#0f172a" />
-              <rect x="94" y="54" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="110" y="54" width="16" height="8" rx="1.5" fill="#0f172a" />
-
-              <rect x="14" y="76" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="30" y="74" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="48" y="72" width="10" height="10" rx="2" fill="#0f172a" />
-              <rect x="64" y="70" width="14" height="8" rx="1.5" fill="#10b981" />
-              <rect x="84" y="74" width="8" height="14" rx="1.5" fill="#0f172a" />
-              <rect x="100" y="70" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="116" y="76" width="10" height="8" rx="1.5" fill="#0f172a" />
-
-              <rect x="54" y="94" width="8" height="16" rx="1.5" fill="#0f172a" />
-              <rect x="68" y="94" width="14" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="90" y="94" width="8" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="106" y="94" width="12" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="68" y="112" width="8" height="14" rx="1.5" fill="#0f172a" />
-              <rect x="84" y="116" width="14" height="8" rx="1.5" fill="#0f172a" />
-              <rect x="106" y="112" width="18" height="14" rx="2" fill="#0f172a" />
-            </svg>
+            />
           </div>
           <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
