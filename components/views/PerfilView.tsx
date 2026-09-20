@@ -13,6 +13,7 @@ interface UserData {
   email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  is_anonymous?: boolean;
 }
 
 export default function PerfilView({
@@ -53,7 +54,6 @@ export default function PerfilView({
   };
 
   const handleDeleteAccount = () => {
-    // In a real app we'd check if totalPorCobrar or totalPorPagar != 0 and deny deletion.
     if (wallet.totalPorCobrar !== 0 || wallet.totalPorPagar !== 0) {
       setMessage({ text: 'No puedes borrar tu cuenta mientras tengas deudas pendientes.', type: 'error' });
       return;
@@ -61,6 +61,65 @@ export default function PerfilView({
     setMessage({ text: 'El borrado de cuentas está desactivado en la versión de prueba.', type: 'error' });
   };
 
+  // VISTA PARA INVITADOS
+  if (user.is_anonymous) {
+    return (
+      <div className="w-full max-w-md mx-auto px-4 pb-28 pt-4 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <header className="py-2 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white font-heading">
+            Mi Perfil
+          </h1>
+          <Link href="/" className="text-xs text-emerald-700 dark:text-emerald-400 font-bold hover:underline">
+            Volver
+          </Link>
+        </header>
+
+        <section className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-emerald-100 dark:border-emerald-900/30 p-8 shadow-xl flex flex-col items-center text-center gap-6 mt-4 relative overflow-hidden">
+          {/* Decorative background blur */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="relative w-24 h-24 rounded-[2rem] bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 flex items-center justify-center shadow-inner border border-white/50 dark:border-white/10 rotate-3 transition-transform hover:rotate-6">
+            <span className="text-4xl">👋</span>
+          </div>
+          
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Cuenta de Invitado</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-4">
+              Estás usando LaRonda de forma temporal. Para guardar tu progreso, sincronizar tus pagos y acceder desde cualquier dispositivo, crea una cuenta gratis.
+            </p>
+          </div>
+
+          <div className="w-full flex flex-col gap-3 mt-2">
+            <Link 
+              href={`/registro?callbackUrl=/perfil`}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-600 text-white font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 group"
+            >
+              <span>Crear Cuenta Gratis</span>
+              <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </Link>
+            
+            <Link 
+              href={`/login?callbackUrl=/perfil`}
+              className="w-full py-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-slate-800"
+            >
+              Ya tengo cuenta (Iniciar Sesión)
+            </Link>
+          </div>
+        </section>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-4 w-full py-3.5 rounded-2xl text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">logout</span>
+          Cerrar Sesión Temporal
+        </button>
+      </div>
+    );
+  }
+
+  // VISTA NORMAL PARA USUARIOS LOGUEADOS
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-28 pt-4 flex flex-col gap-4">
       <header className="py-2 flex items-center justify-between">

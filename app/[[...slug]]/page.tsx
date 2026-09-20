@@ -109,6 +109,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
       email: currentUser.email || null,
       phone: currentUser.phone || null,
       avatar_url: currentUser.avatar_url || null,
+      is_anonymous: currentUser.is_anonymous,
     };
 
     return <PerfilView user={userData} wallet={{ totalPorCobrar: wallet.totalPorCobrar, totalPorPagar: wallet.totalPorPagar }} />;
