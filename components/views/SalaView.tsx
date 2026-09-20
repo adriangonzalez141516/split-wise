@@ -152,23 +152,14 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
         </div>
 
         {/* Primary Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="pt-1 w-full">
           <button
             type="button"
             onClick={() => isAnonymous ? setShowGuestAlert(true) : setShowCreateEventoModal(true)}
-            className="py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98"
+            className="w-full py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98"
           >
             <span className="material-symbols-outlined text-[17px]">add_circle</span>
             <span className="whitespace-nowrap">Nuevo Evento</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => isAnonymous ? setShowGuestAlert(true) : setShowScanModal(true)}
-            className="py-2.5 px-3 rounded-xl bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-98"
-          >
-            <span className="material-symbols-outlined text-[17px]">receipt_long</span>
-            <span className="whitespace-nowrap">Escanear Ticket IA</span>
           </button>
         </div>
       </section>
