@@ -369,3 +369,31 @@ export async function comprarPaseSalaAction(
     message: 'Pase de Sala activado. Coste de 4,99 € repartido equitativamente entre los miembros de la sala.',
   };
 }
+
+export async function joinSalaGuestAction(salaId: string, nick: string) {
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user || !user.is_anonymous) {
+    throw new Error('Debes ser un invitado anónimo para usar esto.');
+  }
+
+  const memberId = `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`;
+
+  const { error } = await supabase.from('sala_members').insert({
+    id: memberId,
+    sala_id: salaId,
+    name: nick.trim(),
+    is_virtual: true,
+    user_id: user.id,
+    registered_user_id: null,
+  });
+
+  if (error) {
+    console.error('[Supabase] Error uniendo invitado a sala:', error);
+    throw new Error('No se pudo unir a la sala');
+  }
+  
+  revalidatePath(`/sala/${salaId}`);
+  return { success: true };
+}

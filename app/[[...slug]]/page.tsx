@@ -73,7 +73,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
       };
     });
 
-    return <SalaView sala={sala} balanceCalculation={balance} allBalances={allBalances} currentUserId={targetUserId} />;
+    return <SalaView sala={sala} balanceCalculation={balance} allBalances={allBalances} currentUserId={targetUserId} isAnonymous={currentUser.is_anonymous} />;
   }
 
   // 3. Evento Live View (/sala/[salaId]/evento/[eventoId] or /evento/[eventoId])
@@ -88,7 +88,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
     const myMember = sala.members.find((m) => m.id === currentUser.id || m.registeredUserId === currentUser.id) || sala.members[0];
     const targetUserId = myMember ? myMember.id : currentUser.id;
 
-    return <EventoLiveView sala={sala} evento={evento} currentUserId={targetUserId} />;
+    return <EventoLiveView sala={sala} evento={evento} currentUserId={targetUserId} isAnonymous={currentUser.is_anonymous} />;
   }
 
   // 4. Actividad View (/actividad)

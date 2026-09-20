@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  is_anonymous: boolean;
 }
 
 export async function getCurrentUserAction(): Promise<UserProfile | null> {
@@ -37,6 +38,7 @@ export async function getCurrentUserAction(): Promise<UserProfile | null> {
       email: profile.email,
       phone: profile.phone,
       avatar_url: profile.avatar_url,
+      is_anonymous: user.is_anonymous || false,
     };
   } catch (error) {
     console.error('Error fetching current user:', error);

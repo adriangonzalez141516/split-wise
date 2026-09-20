@@ -14,13 +14,15 @@ interface EventoLiveViewProps {
   sala: Sala;
   evento: Evento;
   currentUserId: string;
+  isAnonymous?: boolean;
 }
 
-export default function EventoLiveView({ sala, evento, currentUserId }: EventoLiveViewProps) {
+export default function EventoLiveView({ sala, evento, currentUserId, isAnonymous }: EventoLiveViewProps) {
   const [activeTab, setActiveTab] = useState<'ticket' | 'balance' | 'settle'>('ticket');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showAddPlatoModal, setShowAddPlatoModal] = useState(false);
+  const [showGuestAlert, setShowGuestAlert] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
 
   // Local optimistic state for dishes
@@ -282,7 +284,7 @@ export default function EventoLiveView({ sala, evento, currentUserId }: EventoLi
 
             <button
               type="button"
-              onClick={() => setShowAddPlatoModal(true)}
+              onClick={() => isAnonymous ? setShowGuestAlert(true) : setShowAddPlatoModal(true)}
               className="h-8 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0"
             >
               <span className="material-symbols-outlined text-[16px]">add_circle</span>
@@ -578,6 +580,7 @@ export default function EventoLiveView({ sala, evento, currentUserId }: EventoLi
         onClose={() => setShowQrModal(false)}
         roomName={sala.name}
         tableName={`${evento.venue} (${evento.table || 'Mesa 14'})`}
+        inviteToken={sala.id}
       />
       <MonetizationModal
         isOpen={showMonetizationModal}
@@ -598,6 +601,38 @@ export default function EventoLiveView({ sala, evento, currentUserId }: EventoLi
           setItems((prev) => [...prev, ...newItems]);
         }}
       />
+
+      {/* Guest Alert Modal */}
+      {showGuestAlert && (
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 flex flex-col gap-4 items-center text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl">lock</span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 font-heading">Acción Restringida</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Estás navegando como invitado. Para crear eventos o añadir gastos a la mesa necesitas registrarte o iniciar sesión.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 w-full mt-2">
+              <button
+                type="button"
+                onClick={() => setShowGuestAlert(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cerrar
+              </button>
+              <Link
+                href="/login"
+                className="flex-1 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors shadow-xs flex items-center justify-center"
+              >
+                Registrarme
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
