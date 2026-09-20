@@ -624,7 +624,7 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
                 Cerrar
               </button>
               <Link
-                href="/login"
+                href={`/login?callbackUrl=/sala/${sala.id}/evento/${evento.id}`}
                 className="flex-1 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors shadow-xs flex items-center justify-center"
               >
                 Registrarme

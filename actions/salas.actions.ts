@@ -52,6 +52,8 @@ export async function getSalasAction(): Promise<Sala[]> {
       avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
       isVirtual: Boolean(m.is_virtual),
       claimToken: m.claim_token ? String(m.claim_token) : undefined,
+      userId: m.user_id ? String(m.user_id) : undefined,
+      registeredUserId: m.registered_user_id ? String(m.registered_user_id) : undefined,
     })),
     eventos: (s.eventos || [])
       .sort(
@@ -144,6 +146,8 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
       avatarUrl: m.avatar_url ? String(m.avatar_url) : undefined,
       isVirtual: Boolean(m.is_virtual),
       claimToken: m.claim_token ? String(m.claim_token) : undefined,
+      userId: m.user_id ? String(m.user_id) : undefined,
+      registeredUserId: m.registered_user_id ? String(m.registered_user_id) : undefined,
     })),
     eventos: (s.eventos || [])
       .sort(

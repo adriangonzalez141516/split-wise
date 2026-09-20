@@ -35,6 +35,7 @@ export interface Member {
   isVirtual: boolean; // Virtual Guest / Usuario Fantasma
   claimToken?: string; // Token for account claim
   registeredUserId?: string; // If claimed, maps to real user ID
+  userId?: string; // User ID from Supabase Auth
 }
 
 export type BizumStatus = 'propuesta' | 'pendiente' | 'consolidado';

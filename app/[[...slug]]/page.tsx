@@ -59,7 +59,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
     const sala = await getSalaDetailAction(route.salaId);
     if (!sala) return notFound();
 
-    const myMember = sala.members.find((m) => m.id === currentUser.id || m.registeredUserId === currentUser.id) || sala.members[0];
+    const myMember = sala.members.find((m) => m.id === currentUser.id || m.registeredUserId === currentUser.id || m.userId === currentUser.id) || sala.members[0];
     const targetUserId = myMember ? myMember.id : currentUser.id;
     const balance = calculateRoomBalance(sala, targetUserId);
     const allBalances = sala.members.map((m) => {
@@ -85,7 +85,7 @@ export default async function OrchestratorPage({ params }: PageProps) {
 
     if (!sala || !evento) return notFound();
 
-    const myMember = sala.members.find((m) => m.id === currentUser.id || m.registeredUserId === currentUser.id) || sala.members[0];
+    const myMember = sala.members.find((m) => m.id === currentUser.id || m.registeredUserId === currentUser.id || m.userId === currentUser.id) || sala.members[0];
     const targetUserId = myMember ? myMember.id : currentUser.id;
 
     return <EventoLiveView sala={sala} evento={evento} currentUserId={targetUserId} isAnonymous={currentUser.is_anonymous} />;

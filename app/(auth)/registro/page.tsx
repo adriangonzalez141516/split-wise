@@ -10,6 +10,7 @@ function RegistroForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const claimToken = searchParams.get('claim_token') || '';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const [name, setName] = useState('');
   const [nick, setNick] = useState('');
@@ -43,14 +44,14 @@ function RegistroForm() {
         );
         if (res.success) {
           setSuccessMessage(res.message);
-          setTimeout(() => router.push('/'), 1200);
+          setTimeout(() => router.push(callbackUrl), 1200);
           return;
         } else {
           setErrorMessage(res.message);
         }
       } else {
         setSuccessMessage('Cuenta creada exitosamente.');
-        setTimeout(() => router.push('/'), 800);
+        setTimeout(() => router.push(callbackUrl), 800);
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Error durante el registro');
@@ -219,7 +220,7 @@ function RegistroForm() {
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">
             ¿Ya tienes una cuenta?{' '}
-            <Link href="/login" className="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline decoration-emerald-500/30 hover:decoration-emerald-500/80 dark:hover:decoration-emerald-400 underline-offset-4">
+            <Link href={`/login${searchParams.toString() ? '?' + searchParams.toString() : ''}`} className="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline decoration-emerald-500/30 hover:decoration-emerald-500/80 dark:hover:decoration-emerald-400 underline-offset-4">
               Inicia sesión
             </Link>
           </p>
