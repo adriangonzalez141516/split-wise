@@ -34,7 +34,7 @@ export async function getEventoDetailAction(salaId: string, eventoId: string): P
     venue: e.venue,
     date: e.date,
     status: e.status as 'en_curso' | 'cerrado',
-    originalPayerId: e.original_payer_id || 'm1',
+    originalPayerId: e.original_payer_id || null,
     items: (e.items || []).map((item: Record<string, unknown>) => ({
       id: String(item.id),
       name: String(item.name),
@@ -192,7 +192,7 @@ export async function consolidarEventoAction(
     balances.push({ memberId: member.id, netBalance: Math.round(net * 100) / 100 });
   }
 
-  const optimizedTx = calculateMinCashFlow(balances, evento.originalPayerId);
+  const optimizedTx = calculateMinCashFlow(balances, evento.originalPayerId || undefined);
 
   const supabase = await getSupabaseServer();
   const { error: updateError } = await supabase.from('eventos').update({ status: 'cerrado' }).eq('id', eventoId);
@@ -450,12 +450,14 @@ export async function borrarPlatoAction(
 export async function setEventPayerAction(
   salaId: string,
   eventoId: string,
-  payerMemberId: string
+  payerMemberId: string | null
 ): Promise<{ success: boolean; message: string }> {
   const supabase = await getSupabaseServer();
+  
+  // If payerMemberId is empty string or falsy, we set to null
   const { error } = await supabase
     .from('eventos')
-    .update({ original_payer_id: payerMemberId })
+    .update({ original_payer_id: payerMemberId || null })
     .eq('id', eventoId)
     .eq('sala_id', salaId);
 

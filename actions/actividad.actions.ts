@@ -51,7 +51,7 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
         description: `Añadió un nuevo evento por ${ev.totalAmount.toFixed(2)}€`,
         amount: ev.totalAmount,
         timestamp: ev.date || sala.createdAt || new Date().toISOString(),
-        actorId: ev.originalPayerId,
+        actorId: ev.originalPayerId || '',
         actorName: payerName,
       });
 
@@ -66,7 +66,7 @@ export async function getActividadGlobalAction(currentUserId: string): Promise<A
           description: `Añadió "${item.name}" al evento ${ev.venue || ev.title}`,
           amount: item.total_price || (item.unit_price * item.quantity),
           timestamp: ev.date || sala.createdAt || new Date().toISOString(),
-          actorId: ev.originalPayerId, // Asumimos que el creador del evento o pagador lo añade
+          actorId: ev.originalPayerId || '', // Asumimos que el creador del evento o pagador lo añade
           actorName: payerName,
         });
       }

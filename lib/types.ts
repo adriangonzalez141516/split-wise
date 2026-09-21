@@ -60,7 +60,7 @@ export interface Evento {
   table?: string;
   date: string;
   status: 'en_curso' | 'cerrado';
-  originalPayerId: string; // Original bill payer (Mateo / Carlos)
+  originalPayerId: string | null; // Original bill payer (Mateo / Carlos)
   items: TicketItem[];
   commonCosts: {
     name: string;

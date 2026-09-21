@@ -21,7 +21,7 @@ export default function CreateEventoModal({
   const router = useRouter();
   const [venue, setVenue] = useState('');
   const [title, setTitle] = useState('');
-  const [payerId, setPayerId] = useState(sala.members[0]?.id || 'user-carlos');
+  const [payerId, setPayerId] = useState(''); // Default to empty string
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -38,7 +38,7 @@ export default function CreateEventoModal({
         title: title.trim() || venue.trim(),
         table: '',
         date: today,
-        originalPayerId: payerId,
+        originalPayerId: payerId || undefined,
       });
 
       if (res.success && res.evento) {
@@ -130,6 +130,7 @@ export default function CreateEventoModal({
               onChange={(e) => setPayerId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-600 font-semibold text-slate-800 transition-colors"
             >
+              <option value="">Decidir en la mesa (Ruleta) 🎲</option>
               {sala.members.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name} {m.isVirtual ? '(Virtual)' : ''}
@@ -137,7 +138,7 @@ export default function CreateEventoModal({
               ))}
             </select>
             <span className="text-[10px] text-slate-400 block mt-1">
-              Quién adelanta el total al camarero/restaurante.
+              Quién adelanta el total. Puedes sortearlo luego.
             </span>
           </div>
 
