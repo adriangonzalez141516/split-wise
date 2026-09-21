@@ -26,6 +26,7 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showAddPlatoModal, setShowAddPlatoModal] = useState(false);
   const [showGuestAlert, setShowGuestAlert] = useState(false);
+  const [dishToDelete, setDishToDelete] = useState<TicketItem | null>(null);
   const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
 
   // Local optimistic state for dishes
@@ -111,14 +112,20 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
     });
   };
 
-  const handleDeleteDish = (itemId: string) => {
+  const handleDeleteDish = (item: TicketItem) => {
     if (isAnonymous) {
       setShowGuestAlert(true);
       return;
     }
-    if (!confirm('¿Estás seguro de que quieres borrar este plato?')) return;
+    setDishToDelete(item);
+  };
 
+  const confirmDeleteDish = () => {
+    if (!dishToDelete) return;
+    const itemId = dishToDelete.id;
+    
     setItems((prev) => prev.filter((item) => item.id !== itemId));
+    setDishToDelete(null);
 
     startTransition(async () => {
       await borrarPlatoAction(sala.id, evento.id, itemId);
@@ -405,7 +412,7 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
                     <div className="flex flex-col items-end shrink-0 gap-1">
                       <button
                         type="button"
-                        onClick={() => handleDeleteDish(item.id)}
+                        onClick={() => handleDeleteDish(item)}
                         className="text-slate-300 hover:text-red-500 transition-colors p-1 flex items-center justify-center rounded-lg hover:bg-red-50 active:scale-95"
                         title="Borrar plato"
                       >
@@ -705,6 +712,39 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
               >
                 Registrarme
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dish Modal */}
+      {dishToDelete && (
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 flex flex-col gap-4 items-center text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl">delete</span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 font-heading">Borrar plato</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                ¿Estás seguro de que quieres borrar el plato <strong className="text-slate-700">{dishToDelete.name}</strong>? Se eliminará para todos los comensales y se recalculará el bote.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 w-full mt-2">
+              <button
+                type="button"
+                onClick={() => setDishToDelete(null)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteDish}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors shadow-xs flex items-center justify-center"
+              >
+                Sí, borrar
+              </button>
             </div>
           </div>
         </div>
