@@ -208,7 +208,7 @@ export async function crearSalaAction(name: string, description: string, invitad
     '-' +
     Date.now().toString().slice(-4);
 
-  const creatorMemberId = currentUser.id;
+  const creatorMemberId = `${salaSlug}-${currentUser.id}`;
 
   const supabase = await getSupabaseServer();
   const { error: salaError } = await supabase.from('salas').insert({
@@ -236,8 +236,8 @@ export async function crearSalaAction(name: string, description: string, invitad
     phone: currentUser.phone || null,
     avatar_url: currentUser.avatar_url || null,
     is_virtual: false,
-    user_id: creatorMemberId,
-    registered_user_id: creatorMemberId,
+    user_id: currentUser.id,
+    registered_user_id: currentUser.id,
   });
 
   if (memberError) {
@@ -440,7 +440,7 @@ export async function joinSalaGuestAction(salaId: string, nick: string, claimMem
     // Crear un miembro nuevo
     const memberId = isAnonymous 
       ? `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`
-      : currentUser.id;
+      : `${salaId}-${currentUser.id}`;
 
     const { error } = await supabase.from('sala_members').insert({
       id: memberId,
