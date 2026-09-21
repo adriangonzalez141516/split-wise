@@ -7,7 +7,7 @@ import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
-import { toggleItemClaimAction } from '@/actions/eventos.actions';
+import { toggleItemClaimAction, borrarPlatoAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -107,6 +107,21 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
 
     startTransition(async () => {
       await toggleItemClaimAction(sala.id, evento.id, itemId, currentUserId);
+      router.refresh();
+    });
+  };
+
+  const handleDeleteDish = (itemId: string) => {
+    if (isAnonymous) {
+      setShowGuestAlert(true);
+      return;
+    }
+    if (!confirm('¿Estás seguro de que quieres borrar este plato?')) return;
+
+    setItems((prev) => prev.filter((item) => item.id !== itemId));
+
+    startTransition(async () => {
+      await borrarPlatoAction(sala.id, evento.id, itemId);
       router.refresh();
     });
   };
@@ -387,13 +402,23 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="text-sm font-black text-slate-900 tabular-nums font-heading block whitespace-nowrap">
-                        {item.total_price.toFixed(2).replace('.', ',')} €
-                      </span>
-                      <p className="text-[11px] text-emerald-700 font-bold tabular-nums whitespace-nowrap">
-                        {item.assignedMemberIds.length > 0 ? `${unitShare.toFixed(2).replace('.', ',')} € / c/u` : `${item.total_price.toFixed(2).replace('.', ',')} € total`}
-                      </p>
+                    <div className="flex flex-col items-end shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDish(item.id)}
+                        className="text-slate-300 hover:text-red-500 transition-colors p-1 flex items-center justify-center rounded-lg hover:bg-red-50 active:scale-95"
+                        title="Borrar plato"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                      <div className="text-right">
+                        <span className="text-sm font-black text-slate-900 tabular-nums font-heading block whitespace-nowrap">
+                          {item.total_price.toFixed(2).replace('.', ',')} €
+                        </span>
+                        <p className="text-[11px] text-emerald-700 font-bold tabular-nums whitespace-nowrap">
+                          {item.assignedMemberIds.length > 0 ? `${unitShare.toFixed(2).replace('.', ',')} € / c/u` : `${item.total_price.toFixed(2).replace('.', ',')} € total`}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

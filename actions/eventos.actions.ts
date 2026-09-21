@@ -414,3 +414,35 @@ export async function crearEventoAction(
     } 
   };
 }
+
+export async function borrarPlatoAction(
+  salaId: string,
+  eventoId: string,
+  itemId: string
+): Promise<{ success: boolean; message: string }> {
+  const supabase = await getSupabaseServer();
+  
+  // Borrar el item. Las asignaciones se borran en cascada automáticamente (ON DELETE CASCADE)
+  const { error } = await supabase
+    .from('ticket_items')
+    .delete()
+    .eq('id', itemId)
+    .eq('evento_id', eventoId); // Asegurar que pertenece al evento correcto
+    
+  if (error) {
+    console.error('[Supabase] Error al borrar plato:', error);
+    throw new Error('Error al borrar el plato');
+  }
+  
+  // Recalcular el total del evento
+  const { data: allItems } = await supabase.from('ticket_items').select('total_price').eq('evento_id', eventoId);
+  if (allItems) {
+    const sum = allItems.reduce((acc, curr) => acc + Number(curr.total_price || 0), 0);
+    await supabase.from('eventos').update({ total_amount: Math.round(sum * 100) / 100 }).eq('id', eventoId);
+  }
+
+  revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
+  revalidatePath(`/sala/${salaId}`);
+  
+  return { success: true, message: 'Plato borrado' };
+}
