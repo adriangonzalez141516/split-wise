@@ -35,7 +35,8 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
   // Sync state if server props change (revalidación o navegación)
   useEffect(() => {
     setItems(evento.items);
-  }, [evento.items]);
+    setLocalEvento(evento);
+  }, [evento]);
 
   useEffect(() => {
     setTransactions(evento.transactions);
