@@ -80,6 +80,7 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
     };
   }, [evento.id, router]);
 
+  const [isPending, startTransition] = useTransition();
   const [localEvento, setLocalEvento] = useState<Evento>(evento);
 
   const currentUserMember = sala.members.find(
@@ -104,9 +105,10 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
       })
     );
 
-    // API Call
-    await toggleItemClaimAction(sala.id, evento.id, itemId, currentUserId);
-    router.refresh();
+    startTransition(async () => {
+      await toggleItemClaimAction(sala.id, evento.id, itemId, currentUserId);
+      router.refresh();
+    });
   };
 
   // Confirm transaction settlement with confetti
@@ -639,11 +641,15 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
         currentUserId={currentUserId}
         onDishAdded={(newItem) => {
           setItems((prev) => [...prev, newItem]);
-          router.refresh();
+          startTransition(() => {
+            router.refresh();
+          });
         }}
         onMultipleDishesAdded={(newItems) => {
           setItems((prev) => [...prev, ...newItems]);
-          router.refresh();
+          startTransition(() => {
+            router.refresh();
+          });
         }}
       />
 
