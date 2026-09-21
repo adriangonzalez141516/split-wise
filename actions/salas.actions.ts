@@ -194,7 +194,7 @@ export async function getSalaDetailAction(salaId: string): Promise<Sala | null> 
   };
 }
 
-export async function crearSalaAction(name: string, description: string): Promise<Sala> {
+export async function crearSalaAction(name: string, description: string, invitados: string[] = []): Promise<Sala> {
   const currentUser = await getCurrentUserAction();
   if (!currentUser) throw new Error('No autorizado');
 
@@ -243,6 +243,26 @@ export async function crearSalaAction(name: string, description: string): Promis
   if (memberError) {
     console.error('[Supabase] Error al insertar creador en sala_members:', memberError);
     throw new Error('Error al añadir miembro a la sala');
+  }
+
+  // Add virtual members (invitados)
+  if (invitados.length > 0) {
+    const virtualMembers = invitados.map((invitadoName, idx) => {
+      // Create a unique id for the virtual member
+      const virtualId = `guest-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+      return {
+        id: virtualId,
+        sala_id: salaSlug,
+        name: invitadoName,
+        is_virtual: true,
+      };
+    });
+
+    const { error: guestsError } = await supabase.from('sala_members').insert(virtualMembers);
+    if (guestsError) {
+      console.error('[Supabase] Error al insertar invitados virtuales:', guestsError);
+      // We don't throw, we just log it to not fail the room creation completely
+    }
   }
 
   revalidatePath('/');
@@ -374,7 +394,7 @@ export async function comprarPaseSalaAction(
   };
 }
 
-export async function joinSalaGuestAction(salaId: string, nick: string) {
+export async function joinSalaGuestAction(salaId: string, nick: string, claimMemberId?: string) {
   const currentUser = await getCurrentUserAction();
   if (!currentUser) {
     throw new Error('No hay sesión activa.');
@@ -395,27 +415,51 @@ export async function joinSalaGuestAction(salaId: string, nick: string) {
   }
 
   const isAnonymous = currentUser.is_anonymous;
-  const memberId = isAnonymous 
-    ? `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`
-    : currentUser.id;
 
-  const { error } = await supabase.from('sala_members').insert({
-    id: memberId,
-    sala_id: salaId,
-    name: nick.trim(),
-    phone: currentUser.phone || null,
-    avatar_url: currentUser.avatar_url || null,
-    is_virtual: isAnonymous,
-    user_id: currentUser.id,
-    registered_user_id: isAnonymous ? null : currentUser.id,
-  });
+  if (claimMemberId) {
+    // Reclamar un miembro virtual existente
+    const { error: claimError } = await supabase
+      .from('sala_members')
+      .update({
+        user_id: currentUser.id,
+        is_virtual: isAnonymous,
+        name: nick.trim(), // Actualizamos el nombre en caso de que quieran personalizarlo
+        phone: currentUser.phone || null,
+        avatar_url: currentUser.avatar_url || null,
+        registered_user_id: isAnonymous ? null : currentUser.id,
+      })
+      .eq('id', claimMemberId)
+      .eq('sala_id', salaId)
+      .eq('is_virtual', true); // Solo permitir reclamar perfiles que sean virtuales
 
-  if (error) {
-    console.error('[Supabase] Error uniendo usuario a sala:', error);
-    if (error.code === '23503') {
-      throw new Error('El grupo al que intentas unirte no existe o ha sido eliminado.');
+    if (claimError) {
+      console.error('[Supabase] Error reclamando perfil virtual:', claimError);
+      throw new Error('No se pudo vincular al invitado. Puede que ya haya sido reclamado.');
     }
-    throw new Error('No se pudo unir a la sala');
+  } else {
+    // Crear un miembro nuevo
+    const memberId = isAnonymous 
+      ? `guest-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6)}`
+      : currentUser.id;
+
+    const { error } = await supabase.from('sala_members').insert({
+      id: memberId,
+      sala_id: salaId,
+      name: nick.trim(),
+      phone: currentUser.phone || null,
+      avatar_url: currentUser.avatar_url || null,
+      is_virtual: isAnonymous,
+      user_id: currentUser.id,
+      registered_user_id: isAnonymous ? null : currentUser.id,
+    });
+
+    if (error) {
+      console.error('[Supabase] Error uniendo usuario a sala:', error);
+      if (error.code === '23503') {
+        throw new Error('El grupo al que intentas unirte no existe o ha sido eliminado.');
+      }
+      throw new Error('No se pudo unir a la sala');
+    }
   }
   
   revalidatePath(`/sala/${salaId}`);

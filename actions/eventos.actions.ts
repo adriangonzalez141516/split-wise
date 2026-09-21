@@ -446,3 +446,25 @@ export async function borrarPlatoAction(
   
   return { success: true, message: 'Plato borrado' };
 }
+
+export async function setEventPayerAction(
+  salaId: string,
+  eventoId: string,
+  payerMemberId: string
+): Promise<{ success: boolean; message: string }> {
+  const supabase = await getSupabaseServer();
+  const { error } = await supabase
+    .from('eventos')
+    .update({ original_payer_id: payerMemberId })
+    .eq('id', eventoId)
+    .eq('sala_id', salaId);
+
+  if (error) {
+    console.error('[Supabase] Error al actualizar pagador del evento:', error);
+    throw new Error('Error al actualizar el pagador');
+  }
+
+  revalidatePath(`/sala/${salaId}/evento/${eventoId}`);
+  revalidatePath(`/sala/${salaId}`);
+  return { success: true, message: 'Pagador actualizado correctamente' };
+}

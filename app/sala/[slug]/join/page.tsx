@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signInGuestAction } from '@/actions/auth.actions';
 import { joinSalaGuestAction } from '@/actions/salas.actions';
 import { getCurrentUserAction } from '@/actions/user.actions';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 export default function JoinSalaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -16,6 +17,9 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
   
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [existingUser, setExistingUser] = useState<any>(null);
+  
+  const [virtualMembers, setVirtualMembers] = useState<any[]>([]);
+  const [selectedVirtualMemberId, setSelectedVirtualMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -31,7 +35,22 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
         setIsCheckingSession(false);
       }
     };
+
+    const fetchVirtualMembers = async () => {
+      const supabase = createBrowserSupabaseClient();
+      const { data, error } = await supabase
+        .from('sala_members')
+        .select('id, name')
+        .eq('sala_id', slug)
+        .eq('is_virtual', true);
+      
+      if (!error && data) {
+        setVirtualMembers(data);
+      }
+    };
+
     checkUser();
+    fetchVirtualMembers();
   }, []);
 
   const handleJoin = async (e: React.FormEvent) => {
@@ -54,7 +73,11 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
       }
       
       // 2. Unirse al grupo como miembro
-      const joinRes = await joinSalaGuestAction(slug, nick);
+      const joinRes = await joinSalaGuestAction(
+        slug, 
+        selectedVirtualMemberId ? virtualMembers.find(v => v.id === selectedVirtualMemberId)?.name || nick : nick,
+        selectedVirtualMemberId || undefined
+      );
       if (!joinRes.success) {
         throw new Error('No se pudo unir al grupo');
       }
@@ -109,18 +132,61 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
               </div>
             </div>
           ) : (
-            <div className="text-left">
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">Tu Nombre o Apodo</label>
-              <input
-                type="text"
-                value={nick}
-                onChange={(e) => setNick(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-slate-900 placeholder:text-slate-400"
-                placeholder="Ej. Juan Pérez"
-                disabled={loading}
-                maxLength={20}
-                required
-              />
+            <div className="flex flex-col gap-4 text-left">
+              {virtualMembers.length > 0 && (
+                <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex flex-col gap-3">
+                  <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">¿Eres alguno de estos invitados?</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {virtualMembers.map(vm => (
+                      <button
+                        key={vm.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedVirtualMemberId(vm.id);
+                          setNick(vm.name);
+                        }}
+                        className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border ${
+                          selectedVirtualMemberId === vm.id
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-105'
+                            : 'bg-white text-emerald-700 border-emerald-200 hover:border-emerald-400'
+                        }`}
+                      >
+                        {vm.name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedVirtualMemberId(null);
+                        setNick('');
+                      }}
+                      className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border ${
+                        selectedVirtualMemberId === null
+                          ? 'bg-slate-700 text-white border-slate-700 shadow-md scale-105'
+                          : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      Soy alguien nuevo
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedVirtualMemberId === null && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">Tu Nombre o Apodo</label>
+                  <input
+                    type="text"
+                    value={nick}
+                    onChange={(e) => setNick(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                    placeholder="Ej. Juan Pérez"
+                    disabled={loading}
+                    maxLength={20}
+                    required
+                  />
+                </div>
+              )}
             </div>
           )}
 

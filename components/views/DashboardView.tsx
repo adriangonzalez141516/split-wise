@@ -25,6 +25,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newSalaName, setNewSalaName] = useState('');
   const [newSalaDesc, setNewSalaDesc] = useState('');
+  const [invitadosInput, setInvitadosInput] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Suscripción a Realtime para el dashboard (salas y miembros)
@@ -69,9 +70,15 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
     if (!newSalaName.trim()) return;
     setIsCreating(true);
     try {
-      await crearSalaAction(newSalaName, newSalaDesc || 'Grupo de gastos');
+      const invitadosList = invitadosInput
+        .split(',')
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+        
+      await crearSalaAction(newSalaName, newSalaDesc || 'Grupo de gastos', invitadosList);
       setNewSalaName('');
       setNewSalaDesc('');
+      setInvitadosInput('');
       setShowCreateModal(false);
       router.refresh();
     } catch (err) {
@@ -405,6 +412,21 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                   onChange={(e) => setNewSalaDesc(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-emerald-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-colors"
                 />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Invitados Previos <span className="text-slate-400 font-normal">(Opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="ej. Marta, Luis, Ana (separados por coma)"
+                  value={invitadosInput}
+                  onChange={(e) => setInvitadosInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-emerald-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-colors"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Crea perfiles para amigos que se unirán luego para asignarles gastos desde ya.
+                </p>
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <button

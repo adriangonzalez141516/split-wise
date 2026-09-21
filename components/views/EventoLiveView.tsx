@@ -7,10 +7,12 @@ import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
-import { toggleItemClaimAction, borrarPlatoAction } from '@/actions/eventos.actions';
+import { toggleItemClaimAction, borrarPlatoAction, setEventPayerAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { calculateRoomBalance } from '@/lib/store';
+import PayerSelectionModule from '@/components/views/PayerSelectionModule';
 
 interface EventoLiveViewProps {
   sala: Sala;
@@ -339,6 +341,9 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
             <span className="material-symbols-outlined text-[14px]">touch_app</span>
             <span>Toca para asignarte a tus platos</span>
           </div>
+
+          {/* Pre-Ticket: ¿Quién Paga? */}
+          <PayerSelectionModule sala={sala} evento={evento} />
 
           {/* Header de Lista de Platos con botón Añadir Plato / Escanear Ticket */}
           <div className="flex items-center justify-between gap-2 pt-1 pb-0.5">
