@@ -7,7 +7,7 @@ import { Evento, Sala, TicketItem } from '@/lib/types';
 import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
-import { toggleItemClaimAction, borrarPlatoAction, setEventPayerAction } from '@/actions/eventos.actions';
+import { toggleItemClaimAction, borrarPlatoAction, setEventPayerAction, consolidarEventoAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -120,6 +120,21 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
       return;
     }
     setDishToDelete(item);
+  };
+
+  const handleCloseEvent = () => {
+    if (isAnonymous) {
+      setShowGuestAlert(true);
+      return;
+    }
+    if (!evento.originalPayerId) {
+      alert('Debes seleccionar quién adelantó el dinero (El Pagador) en la pestaña "Platos" antes de cerrar la cuenta.');
+      return;
+    }
+    startTransition(async () => {
+      await consolidarEventoAction(sala.id, evento.id);
+      router.refresh();
+    });
   };
 
   const confirmDeleteDish = () => {
@@ -532,32 +547,57 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
       {/* ==================== TAB 3: LIQUIDACIÓN BIZUM ==================== */}
       {activeTab === 'settle' && (
         <div className="flex flex-col gap-3">
-          {/* Regla 1 + Min-Cash-Flow Banner */}
-          <div className="bg-emerald-950 text-white rounded-2xl p-4 flex items-start gap-3 shadow-md relative overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-emerald-800/80 flex items-center justify-center shrink-0 text-emerald-300">
-              <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
-            </div>
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className="text-[11px] font-black text-emerald-300 uppercase tracking-wider">
-                  Regla 1: Pagador Sugerido
-                </h4>
-                <span className="text-[9px] font-bold bg-emerald-800 text-emerald-200 px-1.5 py-0.2 rounded">
-                  Min-Cash-Flow
+          {evento.status === 'en_curso' ? (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 text-center flex flex-col items-center gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl">payments</span>
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 font-heading">Repartir la Cuenta</h3>
+                <p className="text-xs text-slate-500 mt-2 px-4 leading-relaxed">
+                  Cuando todos hayan elegido sus platos y sepáis quién ha pagado al restaurante, pulsa aquí para generar los Bizums optimizados automáticamente.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseEvent}
+                disabled={isPending}
+                className="mt-2 w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {isPending ? 'sync' : 'price_check'}
                 </span>
-              </div>
-              <p className="text-xs text-slate-200 leading-relaxed mt-0.5">
-                <strong>Mateo</strong> paga la cuenta general (184,50 €) al restaurante amortizando su balance negativo (-24,50 €).
-              </p>
-              <div className="text-[10px] text-emerald-300 font-semibold mt-0.5">
-                De 15 pagos cruzados reducidos a 3 transferencias directas.
-              </div>
+                {isPending ? 'Calculando...' : 'Cerrar Cuenta y Repartir'}
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Regla 1 + Min-Cash-Flow Banner */}
+              <div className="bg-emerald-950 text-white rounded-2xl p-4 flex items-start gap-3 shadow-md relative overflow-hidden">
+                <div className="w-9 h-9 rounded-xl bg-emerald-800/80 flex items-center justify-center shrink-0 text-emerald-300">
+                  <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+                </div>
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h4 className="text-[11px] font-black text-emerald-300 uppercase tracking-wider">
+                      Regla 1: Pagador Sugerido
+                    </h4>
+                    <span className="text-[9px] font-bold bg-emerald-800 text-emerald-200 px-1.5 py-0.2 rounded">
+                      Min-Cash-Flow
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-200 leading-relaxed mt-0.5">
+                    <strong>{sala.members.find((m) => m.id === evento.originalPayerId)?.name || 'El pagador'}</strong> adelanta la cuenta general ({evento.totalAmount.toFixed(2).replace('.', ',')} €) al restaurante para amortizar balances.
+                  </p>
+                  <div className="text-[10px] text-emerald-300 font-semibold mt-0.5">
+                    Pagos cruzados reducidos mediante liquidación inteligente.
+                  </div>
+                </div>
+              </div>
 
-          {/* Lista de Bizums Directos Optimizados */}
-          <div className="flex flex-col gap-2.5">
-            {transactions.map((tx) => {
+              {/* Lista de Bizums Directos Optimizados */}
+              <div className="flex flex-col gap-2.5">
+                {transactions.map((tx) => {
               const fromMember = sala.members.find((m) => m.id === tx.fromMemberId);
               const toMember = sala.members.find((m) => m.id === tx.toMemberId);
               const isToCarlos = tx.toMemberId === currentUserId;
@@ -653,6 +693,8 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
               <span className="whitespace-nowrap">Compartir resumen en grupo de WhatsApp</span>
             </button>
           </div>
+        </>
+        )}
         </div>
       )}
 
