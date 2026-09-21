@@ -21,9 +21,9 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
     const checkUser = async () => {
       try {
         const user = await getCurrentUserAction();
-        if (user) {
+        if (user && !user.is_anonymous) {
           setExistingUser(user);
-          setNick(user.nick || user.name || 'Invitado');
+          setNick(user.nick || user.name);
         }
       } catch (err) {
         console.error('Error al chequear sesión', err);
@@ -87,12 +87,12 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
           <h1 className="text-2xl font-bold text-slate-900 mb-2">¡Te han invitado!</h1>
           <p className="text-sm text-slate-500 leading-relaxed">
             Estás a punto de unirte a una mesa en LaRonda.
-            {(!existingUser || existingUser.is_anonymous) && ' Escribe tu nombre para que los demás sepan quién eres.'}
+            {!existingUser && ' Escribe tu nombre para que los demás sepan quién eres.'}
           </p>
         </div>
 
         <form onSubmit={handleJoin} className="w-full flex flex-col gap-4">
-          {(existingUser && !existingUser.is_anonymous) ? (
+          {existingUser ? (
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
                 {existingUser.avatar_url ? (
@@ -146,7 +146,7 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
           </button>
         </form>
         
-        {(!existingUser || existingUser.is_anonymous) && (
+        {!existingUser && (
           <p className="text-[11px] text-slate-400 font-medium">
             Entrarás en modo Invitado. No necesitas contraseña.
           </p>

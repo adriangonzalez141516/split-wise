@@ -382,6 +382,17 @@ export async function joinSalaGuestAction(salaId: string, nick: string) {
 
   const supabase = await getSupabaseServer();
   
+  // Verificar si la sala existe
+  const { data: salaExists, error: salaError } = await supabase
+    .from('salas')
+    .select('id')
+    .eq('id', salaId)
+    .maybeSingle();
+
+  if (!salaExists) {
+    throw new Error('El grupo al que intentas unirte no existe o ha sido eliminado.');
+  }
+  
   // Check if they are already in the room
   const { data: existingMember } = await supabase
     .from('sala_members')
