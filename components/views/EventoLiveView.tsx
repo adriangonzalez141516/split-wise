@@ -106,6 +106,7 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
 
     // API Call
     await toggleItemClaimAction(sala.id, evento.id, itemId, currentUserId);
+    router.refresh();
   };
 
   // Confirm transaction settlement with confetti
@@ -638,9 +639,11 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
         currentUserId={currentUserId}
         onDishAdded={(newItem) => {
           setItems((prev) => [...prev, newItem]);
+          router.refresh();
         }}
         onMultipleDishesAdded={(newItems) => {
           setItems((prev) => [...prev, ...newItems]);
+          router.refresh();
         }}
       />
 
