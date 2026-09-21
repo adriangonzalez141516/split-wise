@@ -61,7 +61,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
               Hola, {wallet.userName}
             </span>
             <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight font-heading mt-0.5">
-              Salas &amp; Grupos
+              Tus Grupos
             </h1>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <button
             type="button"
             onClick={() => setShowMonetizationModal(true)}
-            aria-label="Pases de Sala"
+            aria-label="Pases de Grupo"
             className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/60 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-xs"
             title="Pase Súper-Anfitrión"
           >
@@ -80,7 +80,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
           <button
             type="button"
             onClick={() => setShowQrModal(true)}
-            aria-label="Escanear QR o unirse a sala"
+            aria-label="Escanear QR o unirse a grupo"
             className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-xs"
             title="Unirse vía QR"
           >
@@ -164,7 +164,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
             className="py-3 px-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 active:scale-98 transition-all shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span>Nueva Sala</span>
+            <span>Nuevo Grupo</span>
           </button>
           <button
             type="button"
@@ -181,7 +181,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-extrabold text-slate-900 dark:text-white font-heading uppercase tracking-wider">
-            Tus Salas Activas
+            Tus Grupos Activos
           </h2>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{salas.length} en total</span>
         </div>
@@ -192,9 +192,9 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
               <span className="material-symbols-outlined text-3xl">meeting_room</span>
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Aún no tienes salas</h3>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Aún no tienes grupos</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[250px] mx-auto leading-relaxed">
-                Crea una nueva sala para empezar a compartir gastos, o únete a una existente mediante código QR.
+                Crea un nuevo grupo para empezar a compartir gastos, o únete a uno existente mediante código QR.
               </p>
             </div>
             <div className="flex flex-col w-full gap-2 mt-4">
@@ -204,7 +204,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                 className="w-full py-3.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
               >
                 <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                Crear mi primera Sala
+                Crear mi primer Grupo
               </button>
               <button
                 type="button"
@@ -313,7 +313,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                   prefetch={idx === 0 ? true : undefined}
                   className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs flex items-center gap-1"
                 >
-                  <span>Ver sala</span>
+                  <span>Ver grupo</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
               </div>
@@ -334,7 +334,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
         <div className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">Crear Nueva Sala</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">Crear Nuevo Grupo</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -347,7 +347,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
             </p>
             <form onSubmit={handleCreateSala} className="flex flex-col gap-3 mt-1">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Nombre de la sala</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Nombre del grupo</label>
                 <input
                   type="text"
                   required
@@ -380,7 +380,7 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
                   disabled={isCreating}
                   className="flex-1 py-2.5 rounded-xl bg-emerald-700 dark:bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-800 dark:hover:bg-emerald-500 transition-colors shadow-xs"
                 >
-                  {isCreating ? 'Creando...' : 'Crear Sala'}
+                  {isCreating ? 'Creando...' : 'Crear Grupo'}
                 </button>
               </div>
             </form>

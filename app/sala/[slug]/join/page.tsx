@@ -53,17 +53,17 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
         }
       }
       
-      // 2. Unirse a la sala como miembro
+      // 2. Unirse al grupo como miembro
       const joinRes = await joinSalaGuestAction(slug, nick);
       if (!joinRes.success) {
-        throw new Error('No se pudo unir a la sala');
+        throw new Error('No se pudo unir al grupo');
       }
       
-      // 3. Redirigir a la sala
+      // 3. Redirigir al grupo
       router.push(`/sala/${slug}`);
       
     } catch (err: any) {
-      setError(err.message || 'Ocurrió un error al unirse a la sala');
+      setError(err.message || 'Ocurrió un error al unirse al grupo');
       setLoading(false);
     }
   };

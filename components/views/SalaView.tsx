@@ -72,7 +72,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate leading-none">
-              <span>Sala permanente</span>
+              <span>Grupo permanente</span>
               <span>•</span>
               <span className="text-emerald-700 font-bold">{sala.members.length} miembros</span>
             </div>
@@ -87,7 +87,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
             type="button"
             onClick={() => setShowMonetizationModal(true)}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all shadow-2xs"
-            title="Pase de Sala"
+            title="Pase de Grupo"
           >
             <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
           </button>
@@ -102,15 +102,15 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
         </div>
       </header>
 
-      {/* Operative Room Wallet Card (Monedero de Sala Operativo Bs) */}
+      {/* Operative Room Wallet Card (Monedero de Grupo Operativo Bs) */}
       <section className="fintech-card p-5 flex flex-col gap-3.5 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            MONEDERO DE SALA (OPERATIVO)
+            MONEDERO DE GRUPO (OPERATIVO)
           </span>
           <span className="fintech-pill px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[11px] border border-emerald-200/70">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-            Sala Activa
+            Grupo Activo
           </span>
         </div>
 
@@ -247,7 +247,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
               <span className="material-symbols-outlined text-xl">receipt_long</span>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-700">Sin eventos en esta sala</p>
+              <p className="text-xs font-bold text-slate-700">Sin eventos en este grupo</p>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Crea una cuenta en mesa o escanea un ticket con IA para comenzar.
               </p>
@@ -279,7 +279,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
         </div>
 
         <p className="text-[11px] text-slate-500 -mt-1 leading-normal">
-          Acciones de compensación en cascada y liquidación global de sala con saldo neto suma cero.
+          Acciones de compensación en cascada y liquidación global de grupo con saldo neto suma cero.
         </p>
 
         <div className="flex flex-col gap-2 pt-0.5">
@@ -341,7 +341,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
             </span>
           </button>
 
-          {/* Opción 3: Cierre de sala Min-Cash-Flow */}
+          {/* Opción 3: Cierre de grupo Min-Cash-Flow */}
           <button
             type="button"
             onClick={() => setSettlementModalTab('room_close')}
@@ -354,14 +354,14 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-black text-slate-900 font-heading">
-                    3. Cierre de Sala (Min-Cash-Flow)
+                    3. Cierre de Grupo (Min-Cash-Flow)
                   </span>
                   <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-slate-200 text-slate-800">
                     Regla 4
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                  Liquidación general optimizada para saldar toda la sala a 0,00 €.
+                  Liquidación general optimizada para saldar todo el grupo a 0,00 €.
                 </p>
               </div>
             </div>
@@ -378,7 +378,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-emerald-700 text-[18px]">group</span>
             <h3 className="text-xs font-extrabold text-slate-900 font-heading uppercase tracking-wider">
-              Miembros de la Sala
+              Miembros del Grupo
             </h3>
           </div>
           <button
@@ -438,7 +438,7 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
       </section>
 
       {/* Modals */}
-      <QrModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} roomName={sala.name} inviteToken={sala.id} tableName="Sala Compartida" />
+      <QrModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} roomName={sala.name} inviteToken={sala.id} tableName="Grupo Compartido" />
       <MonetizationModal
         isOpen={showMonetizationModal}
         onClose={() => setShowMonetizationModal(false)}

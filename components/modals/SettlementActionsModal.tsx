@@ -170,7 +170,7 @@ export default function SettlementActionsModal({
                 <span className="material-symbols-outlined text-[16px]">account_tree</span>
                 <span className="font-extrabold text-[11px] whitespace-nowrap">3. Min-Cash</span>
               </div>
-              <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">Cierre de Sala</span>
+              <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">Cierre de Grupo</span>
             </button>
           </div>
 
@@ -236,7 +236,7 @@ export default function SettlementActionsModal({
                     Solicitud para {selectedMember.name}
                   </h3>
                   <p className="text-[11px] text-slate-600 leading-relaxed mt-1">
-                    Reclama lo que se le debe. El sistema le pide primero al <strong>que más debe</strong> en la sala; si no cubre el total, absorbe el 100% y pasa en cascada al 2º y 3º.
+                    Reclama lo que se le debe. El sistema le pide primero al <strong>que más debe</strong> en el grupo; si no cubre el total, absorbe el 100% y pasa en cascada al 2º y 3º.
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -261,7 +261,7 @@ export default function SettlementActionsModal({
                 </div>
               ) : cascadeRequestResult.requests.length === 0 ? (
                 <div className="p-4 rounded-2xl bg-slate-50 text-center text-xs text-slate-500">
-                  No hay deudores pendientes en esta sala.
+                  No hay deudores pendientes en este grupo.
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5">
@@ -271,7 +271,7 @@ export default function SettlementActionsModal({
                   </div>
 
                   {cascadeRequestResult.requests.map((req, idx) => {
-                    const message = `Hola ${req.name}, en la sala "${sala.name}" según el reparto en cascada te corresponde ponerte al día con ${req.amount.toFixed(2)} € por Bizum a ${selectedMember.name}${selectedMember.phone ? ` (${selectedMember.phone})` : ''}. ¡Gracias!`;
+                    const message = `Hola ${req.name}, en el grupo "${sala.name}" según el reparto en cascada te corresponde ponerte al día con ${req.amount.toFixed(2)} € por Bizum a ${selectedMember.name}${selectedMember.phone ? ` (${selectedMember.phone})` : ''}. ¡Gracias!`;
 
                     return (
                       <div
@@ -293,7 +293,7 @@ export default function SettlementActionsModal({
                                 </span>
                               </div>
                               <span className="text-[10px] text-slate-400 block truncate mt-0.5">
-                                {req.phone || 'Comensal de la sala'}
+                                {req.phone || 'Comensal del grupo'}
                               </span>
                             </div>
                           </div>
@@ -355,7 +355,7 @@ export default function SettlementActionsModal({
                     Liquidación para {selectedMember.name}
                   </h3>
                   <p className="text-[11px] text-slate-600 leading-relaxed mt-1">
-                    Pagas al <strong>que más dinero se le deba</strong> en la sala. Si tienes que pagar más de lo que se le debe, el excedente va en cascada al 2º y 3º acreedor.
+                    Pagas al <strong>que más dinero se le deba</strong> en el grupo. Si tienes que pagar más de lo que se le debe, el excedente va en cascada al 2º y 3º acreedor.
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -372,7 +372,7 @@ export default function SettlementActionsModal({
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-center flex flex-col items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-600 text-3xl">check_circle</span>
                   <p className="text-xs font-bold text-slate-800">
-                    {selectedMember.name} está al día en esta sala ({selectedMember.netBalance.toFixed(2).replace('.', ',')} €).
+                    {selectedMember.name} está al día en este grupo ({selectedMember.netBalance.toFixed(2).replace('.', ',')} €).
                   </p>
                   <p className="text-[11px] text-slate-500 max-w-xs">
                     No tiene deuda pendiente. Selecciona arriba a un deudor como <strong>Carlos</strong> (-13,48 €) o <strong>Laura</strong> (-45,15 €) para ver a quién deben transferir por Bizum.
@@ -390,7 +390,7 @@ export default function SettlementActionsModal({
                   </div>
 
                   {cascadePaymentResult.payments.map((pay, idx) => {
-                    const message = `Hola ${pay.name}, te acabo de transferir ${pay.amount.toFixed(2)} € por Bizum para ponerme al día en la sala "${sala.name}". ¡Un saludo!`;
+                    const message = `Hola ${pay.name}, te acabo de transferir ${pay.amount.toFixed(2)} € por Bizum para ponerme al día en el grupo "${sala.name}". ¡Un saludo!`;
 
                     return (
                       <div
@@ -477,7 +477,7 @@ export default function SettlementActionsModal({
                     </span>
                   </div>
                   <h3 className="text-xs font-bold text-white mt-0.5 font-heading">
-                    Liquidación Global de la Sala
+                    Liquidación Global del Grupo
                   </h3>
                   <p className="text-[11px] text-slate-300 leading-relaxed mt-1">
                     Algoritmo de resolución en grafo óptimo: todas las deudas cruzadas entre los {sala.members.length} miembros se cancelan con solo {minCashFlowTransactions.length} transferencias directas.

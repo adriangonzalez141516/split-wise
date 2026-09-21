@@ -95,14 +95,14 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
   // WhatsApp helpers
   const shareWhatsApp = (name: string, amount: string | number) => {
     const text = encodeURIComponent(
-      `Hola ${name}, en LaRonda (Sala: ${sala.name} / Evento: ${evento.venue}) te toca enviar ${amount}€ por Bizum.`
+      `Hola ${name}, en LaRonda (Grupo: ${sala.name} / Evento: ${evento.venue}) te toca enviar ${amount}€ por Bizum.`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const shareEntireTable = () => {
     const text = encodeURIComponent(
-      `🍽️ Resumen de ${evento.venue} (${evento.table || 'Mesa 14'}):\nSala: ${sala.name}\nTotal Ticket: ${evento.totalAmount.toFixed(2)} €\nPagador Sugerido: Mateo\nLiquidación optimizada con LaRonda lista.`
+      `🍽️ Resumen de ${evento.venue} (${evento.table || 'Mesa 14'}):\nGrupo: ${sala.name}\nTotal Ticket: ${evento.totalAmount.toFixed(2)} €\nPagador Sugerido: Mateo\nLiquidación optimizada con LaRonda lista.`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
