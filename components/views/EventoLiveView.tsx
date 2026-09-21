@@ -9,6 +9,8 @@ import MonetizationModal from '@/components/modals/MonetizationModal';
 import AddPlatoModal from '@/components/modals/AddPlatoModal';
 import { toggleItemClaimAction } from '@/actions/eventos.actions';
 import { actualizarEstadoBizumAction } from '@/actions/liquidacion.actions';
+import { useRouter } from 'next/navigation';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 interface EventoLiveViewProps {
   sala: Sala;
@@ -18,6 +20,7 @@ interface EventoLiveViewProps {
 }
 
 export default function EventoLiveView({ sala, evento, currentUserId, isAnonymous }: EventoLiveViewProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'ticket' | 'balance' | 'settle'>('ticket');
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
@@ -37,6 +40,44 @@ export default function EventoLiveView({ sala, evento, currentUserId, isAnonymou
   useEffect(() => {
     setTransactions(evento.transactions);
   }, [evento.transactions]);
+
+  // Suscripción a Realtime para eventos del ticket (platos y transacciones)
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    
+    // Suscribirse a cambios en ticket_items y ticket_item_assignments para este evento
+    const channel = supabase
+      .channel(`evento_live_${evento.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ticket_items', filter: `evento_id=eq.${evento.id}` },
+        (payload) => {
+          console.log('Realtime ticket_items:', payload);
+          router.refresh(); // Refresca los datos del servidor (y con ello, items y transacciones)
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ticket_item_assignments' },
+        (payload) => {
+          console.log('Realtime assignments:', payload);
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'liquidaciones', filter: `evento_id=eq.${evento.id}` },
+        (payload) => {
+          console.log('Realtime liquidaciones:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [evento.id, router]);
 
   const [localEvento, setLocalEvento] = useState<Evento>(evento);
 

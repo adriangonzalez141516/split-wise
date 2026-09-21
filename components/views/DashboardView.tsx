@@ -9,6 +9,8 @@ import QrModal from '@/components/modals/QrModal';
 import MonetizationModal from '@/components/modals/MonetizationModal';
 import { crearSalaAction } from '@/actions/salas.actions';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { useEffect } from 'react';
 
 interface DashboardViewProps {
   wallet: UserGlobalWallet;
@@ -24,6 +26,43 @@ export default function DashboardView({ wallet, salas, currentUserId }: Dashboar
   const [newSalaName, setNewSalaName] = useState('');
   const [newSalaDesc, setNewSalaDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  // Suscripción a Realtime para el dashboard (salas y miembros)
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    
+    const channel = supabase
+      .channel('dashboard_live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sala_members', filter: `user_id=eq.${currentUserId}` },
+        (payload) => {
+          console.log('Realtime dashboard sala_members:', payload);
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'salas' },
+        (payload) => {
+          console.log('Realtime dashboard salas:', payload);
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'liquidaciones' },
+        (payload) => {
+          console.log('Realtime dashboard liquidaciones:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, router]);
 
   const handleCreateSala = async (e: React.FormEvent) => {
     e.preventDefault();

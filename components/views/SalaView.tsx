@@ -9,6 +9,9 @@ import ScanTicketModal from '@/components/modals/ScanTicketModal';
 import SettlementActionsModal, { MemberBalanceInfo } from '@/components/modals/SettlementActionsModal';
 import CreateEventoModal from '@/components/modals/CreateEventoModal';
 import { anadirMiembroVirtualAction } from '@/actions/salas.actions';
+import { useRouter } from 'next/navigation';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { useEffect } from 'react';
 
 interface SalaViewProps {
   sala: Sala;
@@ -19,6 +22,7 @@ interface SalaViewProps {
 }
 
 export default function SalaView({ sala, balanceCalculation, allBalances, currentUserId, isAnonymous }: SalaViewProps) {
+  const router = useRouter();
   const [showQrModal, setShowQrModal] = useState(false);
   const [showMonetizationModal, setShowMonetizationModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -28,6 +32,43 @@ export default function SalaView({ sala, balanceCalculation, allBalances, curren
   const [settlementModalTab, setSettlementModalTab] = useState<'request' | 'pay' | 'room_close' | null>(null);
   const [virtualName, setVirtualName] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Suscripción a Realtime para eventos del grupo (miembros, salas, eventos)
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    
+    const channel = supabase
+      .channel(`sala_live_${sala.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sala_members', filter: `sala_id=eq.${sala.id}` },
+        (payload) => {
+          console.log('Realtime sala_members:', payload);
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'eventos', filter: `sala_id=eq.${sala.id}` },
+        (payload) => {
+          console.log('Realtime eventos:', payload);
+          router.refresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'salas', filter: `id=eq.${sala.id}` },
+        (payload) => {
+          console.log('Realtime salas:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sala.id, router]);
 
   // Effective member balances list
   const effectiveBalances: MemberBalanceInfo[] =
