@@ -17,6 +17,11 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
   const [isSpinning, setIsSpinning] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [localPayerId, setLocalPayerId] = useState<string | null>(evento.originalPayerId);
+
+  useEffect(() => {
+    setLocalPayerId(evento.originalPayerId);
+  }, [evento.originalPayerId]);
 
   // Filter out the "Bote Común" pseudo-member for payer selection
   const validMembers = sala.members.filter(m => m.id !== 'm_bote');
@@ -49,6 +54,9 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
 
   const handlePayerSelected = async (payerId: string) => {
     setIsUpdating(true);
+    const previousPayerId = localPayerId;
+    setLocalPayerId(payerId || null); // Optimistic update
+
     try {
       if (payerId) {
         await setEventPayerAction(sala.id, evento.id, payerId);
@@ -65,6 +73,7 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
       router.refresh();
     } catch (err) {
       console.error(err);
+      setLocalPayerId(previousPayerId); // Rollback on error
     } finally {
       setIsUpdating(false);
     }
@@ -96,8 +105,8 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
   };
 
   // If already decided, we just show a subtle summary 
-  if (evento.originalPayerId) {
-    const payerName = validMembers.find(m => m.id === evento.originalPayerId)?.name || 'Alguien';
+  if (localPayerId) {
+    const payerName = validMembers.find(m => m.id === localPayerId)?.name || 'Alguien';
     return (
       <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3 flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-2">
@@ -137,8 +146,8 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
         </div>
       </div>
 
-      {smartSuggestionId ? (
-        <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex flex-col gap-3 relative z-20">
+      {smartSuggestionId && (
+        <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex flex-col gap-3 relative z-20 mb-2">
           <div className="flex items-center gap-1.5 text-blue-600">
             <span className="material-symbols-outlined text-[16px] filled">tips_and_updates</span>
             <span className="text-[11px] font-bold uppercase tracking-wider">LaRonda Recomienda</span>
@@ -152,7 +161,7 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
               disabled={isUpdating || isSpinning}
               className="flex-1 bg-blue-600 text-white rounded-xl py-2 text-xs font-bold shadow-xs active:scale-95 transition-transform disabled:opacity-50"
             >
-              ¡Yo invito!
+              ¡Yo invito! ({smartSuggestionName})
             </button>
             <button
               onClick={playRoulette}
@@ -164,22 +173,10 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex flex-col gap-3 relative z-20">
-          <div className="flex flex-wrap gap-2 justify-center py-2">
-            {validMembers.map((m, idx) => (
-              <div 
-                key={m.id}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-100 ${
-                  highlightedIndex === idx 
-                    ? 'bg-emerald-500 text-white scale-110 shadow-md ring-2 ring-emerald-200' 
-                    : 'bg-slate-100 text-slate-600 opacity-70'
-                }`}
-              >
-                {m.name}
-              </div>
-            ))}
-          </div>
+      )}
+
+      <div className="flex flex-col gap-3 relative z-20">
+        {!smartSuggestionId && (
           <button
             onClick={playRoulette}
             disabled={isUpdating || isSpinning}
@@ -188,8 +185,31 @@ export default function PayerSelectionModule({ sala, evento }: PayerSelectionMod
             <span className="material-symbols-outlined text-[18px]">play_arrow</span>
             Tirar la ruleta
           </button>
+        )}
+        
+        <div className="flex items-center gap-2 my-1">
+          <div className="h-px bg-slate-100 flex-1"></div>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">O selecciona a mano</span>
+          <div className="h-px bg-slate-100 flex-1"></div>
         </div>
-      )}
+
+        <div className="flex flex-wrap gap-2 justify-center py-1">
+          {validMembers.map((m, idx) => (
+            <button 
+              key={m.id}
+              onClick={() => handlePayerSelected(m.id)}
+              disabled={isSpinning || isUpdating}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-100 ${
+                highlightedIndex === idx 
+                  ? 'bg-emerald-500 text-white scale-110 shadow-md ring-2 ring-emerald-200' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
+              } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
