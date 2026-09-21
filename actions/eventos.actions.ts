@@ -6,6 +6,7 @@ import { Evento, TicketItem } from '@/lib/types';
 import { getCurrentUserAction } from '@/actions/user.actions';
 import { calculateMinCashFlow, identifySuggestedPayer } from '@/lib/min-cash-flow';
 import { getSalaDetailAction } from './salas.actions';
+import { calculateRoomBalance } from '@/lib/store';
 
 export async function getEventoDetailAction(salaId: string, eventoId: string): Promise<Evento | null> {
   const supabase = await getSupabaseServer();
@@ -371,7 +372,26 @@ export async function crearEventoAction(
   const dateStr = eventData.date || new Date().toISOString().split('T')[0];
   const titleStr = eventData.title || eventData.venue || 'Nuevo Evento';
   const venueStr = eventData.venue || 'Restaurante';
-  const payerId = eventData.originalPayerId || 'm1';
+  
+  // Calculate auto payer based on debts
+  let autoPayerId: string | null = null;
+  const sala = await getSalaDetailAction(salaId);
+  if (sala) {
+    const validMembers = sala.members.filter(m => m.id !== 'm_bote');
+    if (validMembers.length > 0) {
+      const balances = validMembers.map(m => {
+        const calc = calculateRoomBalance(sala, m.id);
+        return { id: m.id, balance: calc.netBalance };
+      });
+      
+      balances.sort((a, b) => a.balance - b.balance);
+      
+      // If someone has a debt (balance < 0) or credit (balance > 0), it's not the first event
+      if (balances[0].balance !== 0 || balances[balances.length - 1].balance !== 0) {
+        autoPayerId = balances[0].id;
+      }
+    }
+  }
 
   const supabase = await getSupabaseServer();
   const { error } = await supabase.from('eventos').insert({
@@ -381,7 +401,7 @@ export async function crearEventoAction(
     venue: venueStr,
     date: dateStr,
     status: 'en_curso',
-    original_payer_id: payerId,
+    original_payer_id: autoPayerId,
     total_amount: 0,
   });
 
@@ -404,8 +424,8 @@ export async function crearEventoAction(
       table: eventData.table || 'Mesa 1',
       date: dateStr,
       status: 'en_curso',
-      originalPayerId: payerId,
-      suggestedPayerId: payerId,
+      originalPayerId: autoPayerId,
+      suggestedPayerId: autoPayerId || undefined,
       items: [],
       commonCosts: [],
       globalModifiers: {},

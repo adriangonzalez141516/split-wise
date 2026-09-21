@@ -21,7 +21,6 @@ export default function CreateEventoModal({
   const router = useRouter();
   const [venue, setVenue] = useState('');
   const [title, setTitle] = useState('');
-  const [payerId, setPayerId] = useState(''); // Default to empty string
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -38,7 +37,6 @@ export default function CreateEventoModal({
         title: title.trim() || venue.trim(),
         table: '',
         date: today,
-        originalPayerId: payerId || undefined,
       });
 
       if (res.success && res.evento) {
@@ -120,27 +118,7 @@ export default function CreateEventoModal({
             />
           </div>
 
-          {/* Pagador Adelantado / Sugerido */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Pagador Principal de la Cuenta
-            </label>
-            <select
-              value={payerId}
-              onChange={(e) => setPayerId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-600 font-semibold text-slate-800 transition-colors"
-            >
-              <option value="">Decidir en la mesa (Ruleta) 🎲</option>
-              {sala.members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} {m.isVirtual ? '(Virtual)' : ''}
-                </option>
-              ))}
-            </select>
-            <span className="text-[10px] text-slate-400 block mt-1">
-              Quién adelanta el total. Puedes sortearlo luego.
-            </span>
-          </div>
+
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
