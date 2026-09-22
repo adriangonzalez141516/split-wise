@@ -418,19 +418,16 @@ export async function joinSalaGuestAction(salaId: string, nick: string, claimMem
 
   if (claimMemberId) {
     // Reclamar un miembro virtual existente
-    const { error: claimError } = await supabase
-      .from('sala_members')
-      .update({
-        user_id: currentUser.id,
-        is_virtual: isAnonymous,
-        name: nick.trim(), // Actualizamos el nombre en caso de que quieran personalizarlo
-        phone: currentUser.phone || null,
-        avatar_url: currentUser.avatar_url || null,
-        registered_user_id: isAnonymous ? null : currentUser.id,
-      })
-      .eq('id', claimMemberId)
-      .eq('sala_id', salaId)
-      .eq('is_virtual', true); // Solo permitir reclamar perfiles que sean virtuales
+    const { error: claimError } = await supabase.rpc('claim_virtual_member', {
+      p_member_id: claimMemberId,
+      p_sala_id: salaId,
+      p_user_id: currentUser.id,
+      p_name: nick.trim(),
+      p_phone: currentUser.phone || null,
+      p_avatar_url: currentUser.avatar_url || null,
+      p_is_virtual: isAnonymous,
+      p_registered_user_id: isAnonymous ? null : currentUser.id,
+    });
 
     if (claimError) {
       console.error('[Supabase] Error reclamando perfil virtual:', claimError);
