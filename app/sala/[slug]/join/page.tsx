@@ -42,7 +42,8 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
         .from('sala_members')
         .select('id, name')
         .eq('sala_id', slug)
-        .eq('is_virtual', true);
+        .eq('is_virtual', true)
+        .is('user_id', null);
       
       if (!error && data) {
         setVirtualMembers(data);
