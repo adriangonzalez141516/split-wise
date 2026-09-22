@@ -76,7 +76,7 @@ export default function JoinSalaPage({ params }: { params: Promise<{ slug: strin
       // 2. Unirse al grupo como miembro
       const joinRes = await joinSalaGuestAction(
         slug, 
-        selectedVirtualMemberId ? virtualMembers.find(v => v.id === selectedVirtualMemberId)?.name || nick : nick,
+        nick,
         selectedVirtualMemberId || undefined
       );
       if (!joinRes.success) {
